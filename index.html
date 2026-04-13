@@ -511,16 +511,20 @@ const LANG = {
     briefingIntro: () => pick(["Here's how to solve it next time:", "Let's learn a trick for this one:", "Here's a cool way to figure it out:"]),
     mpBriefingIntro: () => pick(["Here's how to solve it:", "A trick for this one:", "A cool way to figure it out:"]),
     // teaching tips
-    tipNearDoubles: (a, b, sm, answer) => `<strong>Near doubles:</strong> ${a}+${b} is like ${sm}+${sm}=${sm*2}, plus 1 more = <strong>${answer}</strong> 🌟`,
-    tipDoubles: (a, b, answer) => `<strong>Doubles:</strong> ${a}+${b} is a double! ${a}+${a} = <strong>${answer}</strong> 🎯`,
-    tipMake10: (bg, t, l, answer) => `<strong>Make a 10:</strong> ${bg}+${t}=10, then 10+${l} = <strong>${answer}</strong> 🚀`,
-    tipAdd10: (o, answer) => `<strong>Adding to 10:</strong> 10+${o} = <strong>${answer}</strong>! 🪐`,
-    tipCountUp: (bg, sm, steps, answer) => `<strong>Count up:</strong> Start at ${bg}, count up ${sm}: ${steps} = <strong>${answer}</strong> ✋`,
-    tipTakeFrom10: (b, answer) => `<strong>Take from 10:</strong> 10−${b} = <strong>${answer}</strong>. Use your fingers! ✋`,
-    tipGoThrough10: (a, t, r, answer) => `<strong>Go through 10:</strong> ${a}−${t}=10, then 10−${r} = <strong>${answer}</strong> 🚀`,
-    tipFindGap: (b, a, steps, answer) => `<strong>Find the gap:</strong> Count up from ${b} to ${a}: ${steps} = ${answer} steps = <strong>${answer}</strong> 🔭`,
-    tipCountBack: (a, b, steps, answer) => `<strong>Count back:</strong> Start at ${a}, count back ${b}: ${steps} = <strong>${answer}</strong> ✋`,
-    tipTwoStep: (a, op1, b, mid, op2, c, answer) => `<strong>Step by step:</strong> First, ${a} ${op1} ${b} = ${mid}. Then ${mid} ${op2} ${c} = <strong>${answer}</strong> 🧠`,
+    tipNearDoubles: (a, b, sm, answer) => `<strong>Near-doubles trick! 🌟</strong><br>Look — ${a} and ${b} are almost the same number!<br>First, double the smaller one: ${sm} + ${sm} = ${sm*2}<br>Then just add 1 more: ${sm*2} + 1 = <strong>${answer}</strong>`,
+    tipDoubles: (a, b, answer) => `<strong>Doubles! 🎯</strong><br>When both numbers are the same, it's easy!<br>${a} + ${a} means two groups of ${a}.<br>So ${a} + ${a} = <strong>${answer}</strong>`,
+    tipMake10: (bg, t, l, answer) => `<strong>Make a 10 first! 🚀</strong><br>Start with the bigger number: ${bg}<br>How many more to reach 10? Just ${t}! So ${bg} + ${t} = 10<br>Now you still have ${l} left to add: 10 + ${l} = <strong>${answer}</strong>`,
+    tipAdd10: (o, answer) => `<strong>Adding to 10 is easy! 🪐</strong><br>When you add something to 10, just put it after the 1!<br>10 + ${o} = <strong>${answer}</strong>`,
+    tipCountUp: (bg, sm, steps, answer) => `<strong>Count up on your fingers! ✋</strong><br>Start at the bigger number: ${bg}<br>Now count up ${sm} times: ${steps}<br>You land on <strong>${answer}</strong>!`,
+    tipTakeFrom10: (b, answer) => `<strong>Take away from 10! ✋</strong><br>Hold up 10 fingers. Now put down ${b}.<br>How many are still up? <strong>${answer}</strong>!`,
+    tipGoThrough10: (a, t, r, answer) => `<strong>Go through 10! 🚀</strong><br>First, get down to 10: ${a} − ${t} = 10<br>You still need to take away ${r} more: 10 − ${r} = <strong>${answer}</strong>`,
+    tipFindGap: (b, a, steps, answer) => `<strong>Find the gap! 🔭</strong><br>Count up from ${b} to ${a}: ${steps}<br>That's ${answer} steps, so ${a} − ${b} = <strong>${answer}</strong>`,
+    tipCountBack: (a, b, steps, answer) => `<strong>Count backwards! ✋</strong><br>Start at ${a} and count back ${b}: ${steps}<br>You land on <strong>${answer}</strong>!`,
+    tipTwoStep: (a, op1, b, mid, op2, c, answer) => `<strong>Two steps! 🧠</strong><br>Do the first part: ${a} ${op1} ${b} = ${mid}<br>Now use that answer: ${mid} ${op2} ${c} = <strong>${answer}</strong>`,
+    tipPlaceValueAdd: (a, b, aT, bT, tSum, aO, bO, oSum, answer) => `<strong>Break it apart! 🧩</strong><br>Split each number into tens and ones:<br>${a} = ${aT} + ${aO} and ${b} = ${bT} + ${bO}<br>Add the tens: ${aT} + ${bT} = ${tSum}<br>Add the ones: ${aO} + ${bO} = ${oSum}<br>Put them together: ${tSum} + ${oSum} = <strong>${answer}</strong>`,
+    tipPlaceValueSub: (a, b, aT, bT, tDiff, aO, bO, oDiff, answer) => `<strong>Break it apart! 🧩</strong><br>Split each number into tens and ones:<br>${a} = ${aT} + ${aO} and ${b} = ${bT} + ${bO}<br>Subtract the tens: ${aT} − ${bT} = ${tDiff}<br>Subtract the ones: ${aO} − ${bO} = ${oDiff}<br>Put them together: ${tDiff} + ${oDiff} = <strong>${answer}</strong>`,
+    tipJumpSub: (a, b, next10, jTo10, jToA, answer) => `<strong>Jump to a friendly number! 🐸</strong><br>Start at ${b} and jump to the nearest ten:<br>${b} + ${jTo10} = ${next10}<br>Now jump from ${next10} to ${a}:<br>${next10} + ${jToA} = ${a}<br>Add your jumps: ${jTo10} + ${jToA} = <strong>${answer}</strong>`,
+    tipRoundSub: (a, b, rounded, diff, answer) => `<strong>Round and fix! 🎯</strong><br>Round ${b} up to ${rounded} (that's easier to subtract).<br>${a} − ${rounded} = ${a-rounded}<br>But you took away ${diff} too many, so add them back:<br>${a-rounded} + ${diff} = <strong>${answer}</strong>`,
     // difficulty
     diffEasy: 'Easy',
     diffMedium: 'Medium',
@@ -606,16 +610,20 @@ const LANG = {
     briefingIntro: () => pick(['Ево како да решиш следећи пут:', 'Научи трик за ово:', 'Ево једног кул начина:']),
     mpBriefingIntro: () => pick(['Ево решења:', 'Трик за ово:', 'Кул начин да решиш:']),
     // teaching tips
-    tipNearDoubles: (a, b, sm, answer) => `<strong>Скоро дупли:</strong> ${a}+${b} је као ${sm}+${sm}=${sm*2}, плус још 1 = <strong>${answer}</strong> 🌟`,
-    tipDoubles: (a, b, answer) => `<strong>Дупли бројеви:</strong> ${a}+${b} је дупли! ${a}+${a} = <strong>${answer}</strong> 🎯`,
-    tipMake10: (bg, t, l, answer) => `<strong>Направи 10:</strong> ${bg}+${t}=10, па онда 10+${l} = <strong>${answer}</strong> 🚀`,
-    tipAdd10: (o, answer) => `<strong>Додај на 10:</strong> 10+${o} = <strong>${answer}</strong>! 🪐`,
-    tipCountUp: (bg, sm, steps, answer) => `<strong>Бројање навише:</strong> Крени од ${bg}, бројиш ${sm}: ${steps} = <strong>${answer}</strong> ✋`,
-    tipTakeFrom10: (b, answer) => `<strong>Одузми од 10:</strong> 10−${b} = <strong>${answer}</strong>. Користи прсте! ✋`,
-    tipGoThrough10: (a, t, r, answer) => `<strong>Прођи кроз 10:</strong> ${a}−${t}=10, па онда 10−${r} = <strong>${answer}</strong> 🚀`,
-    tipFindGap: (b, a, steps, answer) => `<strong>Нађи разлику:</strong> Бројиш од ${b} до ${a}: ${steps} = ${answer} корака = <strong>${answer}</strong> 🔭`,
-    tipCountBack: (a, b, steps, answer) => `<strong>Бројање уназад:</strong> Крени од ${a}, бројиш уназад ${b}: ${steps} = <strong>${answer}</strong> ✋`,
-    tipTwoStep: (a, op1, b, mid, op2, c, answer) => `<strong>Корак по корак:</strong> Прво, ${a} ${op1} ${b} = ${mid}. Онда ${mid} ${op2} ${c} = <strong>${answer}</strong> 🧠`,
+    tipNearDoubles: (a, b, sm, answer) => `<strong>Скоро дупли бројеви! 🌟</strong><br>Гледај — ${a} и ${b} су скоро исти број!<br>Прво дуплирај мањи: ${sm} + ${sm} = ${sm*2}<br>Онда додај још 1: ${sm*2} + 1 = <strong>${answer}</strong>`,
+    tipDoubles: (a, b, answer) => `<strong>Дупли бројеви! 🎯</strong><br>Кад су оба броја иста, лако је!<br>${a} + ${a} значи две групе од ${a}.<br>Зато ${a} + ${a} = <strong>${answer}</strong>`,
+    tipMake10: (bg, t, l, answer) => `<strong>Направи прво 10! 🚀</strong><br>Крени од већег броја: ${bg}<br>Колико ти треба до 10? Само ${t}! Значи ${bg} + ${t} = 10<br>Сад додај остатак: 10 + ${l} = <strong>${answer}</strong>`,
+    tipAdd10: (o, answer) => `<strong>Сабирање са 10 је лако! 🪐</strong><br>Кад додајеш нешто на 10, само стави тај број после 1!<br>10 + ${o} = <strong>${answer}</strong>`,
+    tipCountUp: (bg, sm, steps, answer) => `<strong>Бројиш на прстима! ✋</strong><br>Крени од већег броја: ${bg}<br>Сад бројиш навише ${sm} пута: ${steps}<br>Стижеш на <strong>${answer}</strong>!`,
+    tipTakeFrom10: (b, answer) => `<strong>Одузми од 10! ✋</strong><br>Подигни 10 прстију. Сад спусти ${b}.<br>Колико је остало? <strong>${answer}</strong>!`,
+    tipGoThrough10: (a, t, r, answer) => `<strong>Прођи кроз 10! 🚀</strong><br>Прво сиђи до 10: ${a} − ${t} = 10<br>Треба да одузмеш још ${r}: 10 − ${r} = <strong>${answer}</strong>`,
+    tipFindGap: (b, a, steps, answer) => `<strong>Нађи разлику! 🔭</strong><br>Бројиш од ${b} до ${a}: ${steps}<br>То је ${answer} корака, значи ${a} − ${b} = <strong>${answer}</strong>`,
+    tipCountBack: (a, b, steps, answer) => `<strong>Бројиш уназад! ✋</strong><br>Крени од ${a} и бројиш уназад ${b}: ${steps}<br>Стижеш на <strong>${answer}</strong>!`,
+    tipTwoStep: (a, op1, b, mid, op2, c, answer) => `<strong>У два корака! 🧠</strong><br>Реши прво ово: ${a} ${op1} ${b} = ${mid}<br>Сад користи тај одговор: ${mid} ${op2} ${c} = <strong>${answer}</strong>`,
+    tipPlaceValueAdd: (a, b, aT, bT, tSum, aO, bO, oSum, answer) => `<strong>Растави па сабери! 🧩</strong><br>Растави сваки број на десетице и јединице:<br>${a} = ${aT} + ${aO} и ${b} = ${bT} + ${bO}<br>Сабери десетице: ${aT} + ${bT} = ${tSum}<br>Сабери јединице: ${aO} + ${bO} = ${oSum}<br>Састави: ${tSum} + ${oSum} = <strong>${answer}</strong>`,
+    tipPlaceValueSub: (a, b, aT, bT, tDiff, aO, bO, oDiff, answer) => `<strong>Растави па одузми! 🧩</strong><br>Растави сваки број на десетице и јединице:<br>${a} = ${aT} + ${aO} и ${b} = ${bT} + ${bO}<br>Одузми десетице: ${aT} − ${bT} = ${tDiff}<br>Одузми јединице: ${aO} − ${bO} = ${oDiff}<br>Састави: ${tDiff} + ${oDiff} = <strong>${answer}</strong>`,
+    tipJumpSub: (a, b, next10, jTo10, jToA, answer) => `<strong>Скочи до лепог броја! 🐸</strong><br>Крени од ${b} и скочи до најближе десетице:<br>${b} + ${jTo10} = ${next10}<br>Сад скочи од ${next10} до ${a}:<br>${next10} + ${jToA} = ${a}<br>Сабери скокове: ${jTo10} + ${jToA} = <strong>${answer}</strong>`,
+    tipRoundSub: (a, b, rounded, diff, answer) => `<strong>Заокружи па поправи! 🎯</strong><br>Заокружи ${b} на ${rounded} (тако је лакше одузети).<br>${a} − ${rounded} = ${a-rounded}<br>Али одузео си ${diff} превише, па врати назад:<br>${a-rounded} + ${diff} = <strong>${answer}</strong>`,
     // difficulty
     diffEasy: 'Лако',
     diffMedium: 'Средње',
@@ -818,16 +826,46 @@ function generateTip(p){
   if(p.twoStep){const L=LANG[currentLang];return L.tipTwoStep(p.a,p.op1,p.b,p.mid,p.op2,p.c,p.answer);}
   const{a,b,isAdd,answer}=p;const L=LANG[currentLang];
   if(isAdd){
-    if(Math.abs(a-b)===1){const sm=Math.min(a,b);return L.tipNearDoubles(a,b,sm,answer);}
+    // Large numbers: use place value (tens + ones)
+    if(a>20||b>20){
+      const aT=Math.floor(a/10)*10,aO=a%10,bT=Math.floor(b/10)*10,bO=b%10;
+      return L.tipPlaceValueAdd(a,b,aT,bT,aT+bT,aO,bO,aO+bO,answer);
+    }
+    // Small number strategies (1-20 range)
     if(a===b)return L.tipDoubles(a,b,answer);
-    if(answer>10&&a>2&&b>2){const bg=Math.max(a,b),sm=Math.min(a,b),tt=10-bg,l=sm-tt;return L.tipMake10(bg,tt,l,answer);}
+    if(Math.abs(a-b)===1){const sm=Math.min(a,b);return L.tipNearDoubles(a,b,sm,answer);}
     if(a===10||b===10){const o=a===10?b:a;return L.tipAdd10(o,answer);}
-    {const bg=Math.max(a,b),sm=Math.min(a,b),st=[];for(let i=1;i<=sm;i++)st.push(bg+i);return L.tipCountUp(bg,sm,st.slice(0,6).join(', ')+(st.length>6?'...':''),answer);}
+    if(answer>10&&a>2&&b>2&&Math.max(a,b)<10){const bg=Math.max(a,b),sm=Math.min(a,b),tt=10-bg,l=sm-tt;return L.tipMake10(bg,tt,l,answer);}
+    {const bg=Math.max(a,b),sm=Math.min(a,b),st=[];for(let i=1;i<=sm;i++)st.push(bg+i);return L.tipCountUp(bg,sm,st.join(', '),answer);}
   }else{
+    // Large numbers: use place value or jump strategy
+    if(a>20){
+      const aO=a%10,bO=b%10;
+      // Easy case: ones digit of a >= ones digit of b (no borrowing)
+      if(aO>=bO){
+        const aT=Math.floor(a/10)*10,bT=Math.floor(b/10)*10;
+        return L.tipPlaceValueSub(a,b,aT,bT,aT-bT,aO,bO,aO-bO,answer);
+      }
+      // Borrowing needed: jump strategy (count up from b to a via next 10)
+      if(b>=10){
+        const next10=Math.ceil(b/10)*10;
+        if(next10===b){
+          // b is already a round number, use round-and-adjust isn't needed, place value works
+          const aT=Math.floor(a/10)*10,bT=b;
+          return L.tipPlaceValueSub(a,b,aT,bT,aT-bT,aO,0,aO,answer);
+        }
+        const jTo10=next10-b,jToA=a-next10;
+        return L.tipJumpSub(a,b,next10,jTo10,jToA,answer);
+      }
+      // b is small, a is big: round b up to 10
+      const jTo10=10-b,jToA=a-10;
+      return L.tipJumpSub(a,b,10,jTo10,jToA,answer);
+    }
+    // Small number strategies (1-20 range)
     if(a===10)return L.tipTakeFrom10(b,answer);
     if(a>10&&answer<10){const tt=a-10,r=b-tt;return L.tipGoThrough10(a,tt,r,answer);}
-    if(b>4&&answer>2){const st=[];for(let i=b+1;i<=a;i++)st.push(i);return L.tipFindGap(b,a,st.slice(0,7).join(', ')+(st.length>7?'...':''),answer);}
-    {const st=[];for(let i=1;i<=b;i++)st.push(a-i);return L.tipCountBack(a,b,st.slice(0,6).join(', ')+(st.length>6?'...':''),answer);}
+    if(b>4&&answer>2&&b<=7){const st=[];for(let i=b+1;i<=a;i++)st.push(i);return L.tipFindGap(b,a,st.join(', '),answer);}
+    {const st=[];for(let i=1;i<=b;i++)st.push(a-i);return L.tipCountBack(a,b,st.join(', '),answer);}
   }
 }
 
