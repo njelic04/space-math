@@ -112,7 +112,7 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
 .player-badge .badge-status { font-size:0.8rem; opacity:0.5; }
 
 /* timer toggle */
-.timer-option { display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; }
+.timer-option { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .toggle { position:relative; width:52px; height:28px; cursor:pointer; background:rgba(255,255,255,0.15); border-radius:14px; transition:background 0.2s; border:none; outline:none; }
 .toggle.on { background:var(--correct); }
 .toggle::after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; transition:transform 0.2s; }
@@ -262,17 +262,19 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
     <input type="text" class="text-input" id="sp-name" placeholder="Your name" maxlength="20" autocomplete="off">
     <input type="password" class="text-input" id="sp-password" placeholder="Password 🔒" maxlength="30" autocomplete="off" style="margin-top:-4px">
     <div id="sp-login-error" style="color:var(--wrong);font-weight:800;min-height:18px;font-size:0.9rem"></div>
-    <div class="timer-option">
-      <span style="font-weight:800">Timer:</span>
-      <button class="toggle" id="sp-timer-toggle"></button>
-      <div class="timer-choices" id="sp-timer-choices" style="display:none">
-        <button data-sec="5">5s</button>
-        <button data-sec="10" class="active">10s</button>
-        <button data-sec="15">15s</button>
-      </div>
-    </div>
     <div class="game-settings" id="sp-game-settings">
       <div class="settings-title" id="sp-settings-title">Game Settings</div>
+      <div class="settings-group">
+        <div class="settings-label" id="sp-timer-label">Timer</div>
+        <div class="timer-option">
+          <button class="toggle" id="sp-timer-toggle"></button>
+          <div class="timer-choices" id="sp-timer-choices" style="display:none">
+            <button data-sec="5">5s</button>
+            <button data-sec="10" class="active">10s</button>
+            <button data-sec="15">15s</button>
+          </div>
+        </div>
+      </div>
       <div class="settings-group">
         <div class="settings-label" id="sp-ops-label">Operations</div>
         <div class="ops-row" id="sp-ops-row">
@@ -362,17 +364,19 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
       <span class="setup-label">Name:</span>
       <input type="text" class="text-input" id="mp-name-input" placeholder="Your name" maxlength="20" autocomplete="off" style="max-width:220px">
     </div>
-    <div class="timer-option">
-      <span style="font-weight:800">Timer:</span>
-      <button class="toggle" id="mp-timer-toggle"></button>
-      <div class="timer-choices" id="mp-timer-choices" style="display:none">
-        <button data-sec="5">5s</button>
-        <button data-sec="10" class="active">10s</button>
-        <button data-sec="15">15s</button>
-      </div>
-    </div>
     <div class="game-settings" id="mp-game-settings">
       <div class="settings-title" id="mp-settings-title">Game Settings</div>
+      <div class="settings-group">
+        <div class="settings-label" id="mp-timer-label">Timer</div>
+        <div class="timer-option">
+          <button class="toggle" id="mp-timer-toggle"></button>
+          <div class="timer-choices" id="mp-timer-choices" style="display:none">
+            <button data-sec="5">5s</button>
+            <button data-sec="10" class="active">10s</button>
+            <button data-sec="15">15s</button>
+          </div>
+        </div>
+      </div>
       <div class="settings-group">
         <div class="settings-label" id="mp-ops-label">Operations</div>
         <div class="ops-row" id="mp-ops-row">
@@ -462,7 +466,7 @@ const LANG = {
     starsRounds: (stars, rounds) => `⭐ ${stars} stars · ${rounds} rounds played`,
     yourName: 'Your name',
     password: 'Password 🔒',
-    timer: 'Timer:',
+    timer: 'Timer',
     start: 'Start! 🚀',
     back: '← Back',
     newRound: 'New Round! 🚀',
@@ -561,7 +565,7 @@ const LANG = {
     starsRounds: (stars, rounds) => `⭐ ${stars} звездица · ${rounds} кругова одиграно`,
     yourName: 'Твоје име',
     password: 'Лозинка 🔒',
-    timer: 'Тајмер:',
+    timer: 'Тајмер',
     start: 'Почни! 🚀',
     back: '← Назад',
     newRound: 'Нови Круг! 🚀',
@@ -672,7 +676,7 @@ function applyLanguage() {
   document.querySelector('#screen-sp-setup .title').textContent = t('soloMission');
   $('sp-name').placeholder = t('yourName');
   $('sp-password').placeholder = t('password');
-  document.querySelector('#screen-sp-setup .timer-option span').textContent = t('timer');
+  $('sp-timer-label').textContent = t('timer');
   $('sp-start').textContent = t('start');
   $('sp-back').textContent = t('back');
   // SP game settings
@@ -698,7 +702,7 @@ function applyLanguage() {
   $('lobby-subtitle').textContent = t('twoPlayerRace');
   document.querySelector('#screen-lobby .setup-label').textContent = t('name');
   $('mp-name-input').placeholder = t('yourName');
-  document.querySelector('#screen-lobby .timer-option span').textContent = t('timer');
+  $('mp-timer-label').textContent = t('timer');
   if (mySlot === '1') $('timer-note').textContent = '';
   else if (mySlot === '2') $('timer-note').textContent = t('onlyHostConfigure');
   else $('timer-note').textContent = t('onlyHostStart');
