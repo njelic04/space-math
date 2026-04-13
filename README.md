@@ -1,8 +1,6 @@
 # Space Math
 
-**By Nenad Jelic**
-
-A fun, space-themed math game for kids! Practice addition and subtraction in solo mode or race against a friend over your home network.
+A space-themed math game for kids. Practice addition and subtraction solo, or race a friend over your home network.
 
 ---
 
@@ -118,4 +116,4 @@ Make sure both devices are on the same Wi-Fi network. Use the Network address sh
 
 ## License
 
-MIT License - Copyright (c) 2026 Nenad Jelic
+MIT
