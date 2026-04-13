@@ -2,6 +2,8 @@
 
 A space-themed math game for kids. Practice addition and subtraction solo, or race a friend over your home network.
 
+**[Прочитај на српском (README_SR.md)](README_SR.md)**
+
 ---
 
 ## What You Need
