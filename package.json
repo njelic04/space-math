@@ -1,0 +1,13 @@
+{
+  "name": "space-math",
+  "version": "2.0.0",
+  "description": "A fun space-themed math game for kids with solo and multiplayer modes",
+  "author": "Nenad Jelic",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}

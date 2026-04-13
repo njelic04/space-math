@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<!-- Space Math - by Nenad Jelic -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="Nenad Jelic">
+<meta name="description" content="A fun space-themed math game for kids with solo and multiplayer modes">
+<title>Space Math</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-dark: #0b0d2a; --bg-card: rgba(255,255,255,0.08);
+  --accent: #ffcc00; --correct: #4cff8e; --wrong: #ff6b6b;
+  --text: #fff; --btn-bg: #1e2266; --btn-hover: #2d35a0;
+}
+html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-dark); color:var(--text); overflow:hidden; user-select:none; -webkit-user-select:none; }
+#stars-canvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+#app { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; height:100%; padding:16px; overflow-y:auto; }
+
+/* screens */
+.screen { display:none; flex-direction:column; align-items:center; justify-content:center; flex:1; width:100%; max-width:650px; text-align:center; gap:14px; }
+.screen.active { display:flex; }
+/* content-heavy screens: top-align so they scroll naturally */
+#screen-sp-setup, #screen-lobby { justify-content:flex-start; padding-top:12px; gap:10px; }
+/* game screens: tighter layout */
+#screen-sp-game, #screen-mp-game { justify-content:flex-start; padding-top:6px; gap:6px; }
+
+/* typo */
+.title { font-family:'Fredoka One',cursive; font-size:2.4rem; line-height:1.2; }
+.subtitle { font-size:1.1rem; opacity:0.8; }
+.hero-emoji { font-size:4.5rem; margin:4px 0; }
+.small-note { font-size:0.85rem; opacity:0.5; margin-top:-4px; }
+/* compact hero on setup screens */
+#screen-sp-setup .hero-emoji, #screen-lobby .hero-emoji { font-size:2.8rem; margin:0; }
+#screen-sp-setup .title, #screen-lobby .title { font-size:1.8rem; }
+
+/* inputs */
+.text-input { font-family:'Fredoka One',cursive; font-size:1.4rem; text-align:center; padding:12px 18px; border:3px solid rgba(108,99,255,0.5); border-radius:14px; background:rgba(255,255,255,0.08); color:var(--accent); outline:none; width:100%; max-width:280px; transition:border-color 0.2s; }
+.text-input::placeholder { color:rgba(255,255,255,0.25); }
+.text-input:focus { border-color:#e040fb; }
+
+/* buttons */
+.btn { font-family:'Fredoka One',cursive; font-size:1.35rem; padding:14px 40px; border:none; border-radius:50px; cursor:pointer; background:linear-gradient(135deg,#6c63ff,#e040fb); color:#fff; letter-spacing:1px; transition:transform 0.12s; -webkit-tap-highlight-color:transparent; }
+.btn:active { transform:scale(0.95); }
+.btn:disabled { opacity:0.4; cursor:default; transform:none; }
+.btn-green { background:linear-gradient(135deg,#1b8a2a,#4cff8e); }
+
+/* mode selector */
+.mode-buttons { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+.mode-card { flex:1; min-width:200px; max-width:260px; background:var(--bg-card); border:3px solid rgba(255,255,255,0.1); border-radius:20px; padding:24px 16px; cursor:pointer; transition:border-color 0.2s, transform 0.15s; }
+.mode-card:hover { border-color:rgba(108,99,255,0.6); }
+.mode-card:active { transform:scale(0.97); }
+.mode-icon { font-size:3rem; margin-bottom:8px; }
+.mode-title { font-family:'Fredoka One',cursive; font-size:1.3rem; margin-bottom:4px; }
+.mode-desc { font-size:0.9rem; opacity:0.6; }
+
+/* scoreboard */
+.scoreboard { width:100%; max-width:650px; display:flex; justify-content:center; align-items:center; gap:16px; padding:8px 0; flex-shrink:0; }
+.sb-player { flex:1; text-align:center; background:var(--bg-card); border-radius:14px; padding:8px 12px; border:2px solid transparent; transition:border-color 0.3s; }
+.sb-player.me { border-color:rgba(108,99,255,0.5); }
+.sb-name { font-size:0.95rem; opacity:0.7; }
+.sb-score { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--accent); }
+.sb-vs { font-family:'Fredoka One',cursive; font-size:1.1rem; opacity:0.4; }
+
+/* single-player header */
+.sp-header { width:100%; max-width:650px; display:flex; justify-content:space-between; align-items:center; padding:6px 4px; flex-shrink:0; }
+.sp-star-counter { font-family:'Fredoka One',cursive; font-size:1.5rem; color:var(--accent); display:flex; align-items:center; gap:8px; }
+.sp-round-label { font-size:0.95rem; opacity:0.7; }
+.sp-streak { white-space:nowrap; }
+
+/* progress / timer bars */
+.progress-bar { width:100%; max-width:650px; height:10px; background:rgba(255,255,255,0.1); border-radius:5px; flex-shrink:0; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,#6c63ff,#e040fb); border-radius:5px; transition:width 0.4s ease; }
+.timer-bar { width:100%; max-width:650px; height:8px; background:rgba(255,255,255,0.08); border-radius:4px; flex-shrink:0; overflow:hidden; }
+.timer-fill { height:100%; background:linear-gradient(90deg,var(--correct),var(--accent),var(--wrong)); border-radius:4px; transition:width 0.15s linear; width:100%; }
+.timer-fill.urgent { animation:timerPulse 0.5s ease-in-out infinite; }
+@keyframes timerPulse { 50%{opacity:0.6;} }
+
+/* problem */
+.problem-box { background:var(--bg-card); border:2px solid rgba(255,255,255,0.12); border-radius:24px; padding:24px 20px; width:100%; }
+.problem-text { font-family:'Fredoka One',cursive; font-size:3rem; letter-spacing:2px; }
+.answer-display { font-family:'Fredoka One',cursive; font-size:3.4rem; height:56px; color:var(--accent); margin-top:2px; display:flex; align-items:center; justify-content:center; }
+.answer-display .cursor { display:inline-block; width:3px; height:42px; background:var(--accent); margin-left:2px; animation:blink 0.8s step-end infinite; }
+@keyframes blink { 50%{opacity:0;} }
+
+/* feedback */
+.feedback { min-height:44px; font-size:1.2rem; font-weight:800; display:flex; align-items:center; justify-content:center; transition:opacity 0.3s; }
+.feedback.correct { color:var(--correct); }
+.feedback.wrong { color:var(--wrong); }
+.keyboard-hint { font-size:0.9rem; opacity:0.4; }
+
+/* briefing */
+.mission-briefing { display:none; width:100%; max-width:600px; background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(224,64,251,0.15)); border:2px solid rgba(108,99,255,0.5); border-radius:20px; padding:22px 18px; text-align:left; animation:briefingIn 0.4s ease-out; }
+.mission-briefing.visible { display:block; }
+@keyframes briefingIn { 0%{opacity:0;transform:translateY(16px) scale(0.96);} 100%{opacity:1;transform:translateY(0) scale(1);} }
+.briefing-header { font-family:'Fredoka One',cursive; font-size:1.1rem; color:var(--accent); margin-bottom:8px; }
+.briefing-answer { font-family:'Fredoka One',cursive; font-size:1.4rem; color:var(--correct); margin-bottom:8px; }
+.briefing-tip { font-size:1.05rem; line-height:1.6; color:rgba(255,255,255,0.9); }
+.briefing-tip strong { color:var(--accent); }
+.btn-got-it { display:block; margin:14px auto 0; font-family:'Fredoka One',cursive; font-size:1.1rem; padding:10px 30px; border:none; border-radius:50px; cursor:pointer; background:linear-gradient(135deg,#6c63ff,#e040fb); color:#fff; transition:transform 0.15s; }
+.btn-got-it:active { transform:scale(0.95); }
+
+/* lobby */
+.setup-row { display:flex; align-items:center; gap:10px; width:100%; max-width:380px; justify-content:center; }
+.setup-label { font-family:'Fredoka One',cursive; font-size:1rem; opacity:0.7; min-width:60px; text-align:right; }
+.host-box { background:rgba(108,99,255,0.15); border:2px solid rgba(108,99,255,0.4); border-radius:14px; padding:14px 18px; width:100%; max-width:440px; font-size:0.95rem; line-height:1.5; }
+.host-box code { font-family:'Fredoka One',cursive; font-size:1.1rem; color:var(--accent); background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px; }
+.player-status { display:flex; gap:16px; width:100%; max-width:400px; justify-content:center; }
+.player-badge { flex:1; background:var(--bg-card); border:2px solid rgba(255,255,255,0.1); border-radius:14px; padding:12px 8px; text-align:center; transition:border-color 0.3s; }
+.player-badge.connected { border-color:var(--correct); }
+.player-badge .badge-icon { font-size:2rem; margin-bottom:4px; }
+.player-badge .badge-name { font-family:'Fredoka One',cursive; font-size:1rem; }
+.player-badge .badge-status { font-size:0.8rem; opacity:0.5; }
+
+/* timer toggle */
+.timer-option { display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; }
+.toggle { position:relative; width:52px; height:28px; cursor:pointer; background:rgba(255,255,255,0.15); border-radius:14px; transition:background 0.2s; border:none; outline:none; }
+.toggle.on { background:var(--correct); }
+.toggle::after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; transition:transform 0.2s; }
+.toggle.on::after { transform:translateX(24px); }
+.timer-choices { display:flex; gap:6px; }
+.timer-choices button { font-family:'Fredoka One',cursive; font-size:0.95rem; padding:6px 14px; border:2px solid rgba(255,255,255,0.15); border-radius:10px; background:transparent; color:var(--text); cursor:pointer; transition:all 0.15s; }
+.timer-choices button.active { border-color:var(--accent); background:rgba(255,204,0,0.15); color:var(--accent); }
+
+/* winner / summary */
+.winner-name { font-family:'Fredoka One',cursive; font-size:2rem; color:var(--accent); }
+.final-scores { display:flex; gap:24px; justify-content:center; font-family:'Fredoka One',cursive; font-size:1.3rem; }
+.summary-stars { font-size:3rem; margin:6px 0; }
+.summary-msg { font-size:1.2rem; }
+.summary-total { font-size:1rem; opacity:0.7; }
+
+/* leaderboard */
+.leaderboard { width:100%; max-width:400px; background:rgba(255,255,255,0.06); border:2px solid rgba(255,255,255,0.1); border-radius:18px; padding:14px; }
+.leaderboard-title { font-family:'Fredoka One',cursive; font-size:1.1rem; color:var(--accent); margin-bottom:8px; }
+.leaderboard-table { width:100%; border-collapse:collapse; }
+.leaderboard-table td { padding:5px 8px; font-size:1rem; }
+.leaderboard-table tr:not(:last-child) td { border-bottom:1px solid rgba(255,255,255,0.08); }
+.lb-rank { width:36px; text-align:center; opacity:0.6; }
+.lb-name { text-align:left; }
+.lb-stars { text-align:right; color:var(--accent); font-weight:800; }
+.lb-medal { font-size:1.2rem; }
+.leaderboard-empty { opacity:0.4; font-size:0.9rem; padding:6px 0; }
+
+/* difficulty / streak */
+.sp-streak { font-family:'Fredoka One',cursive; font-size:1rem; color:#ff9100; }
+.sp-diff-label { font-family:'Fredoka One',cursive; font-size:0.75rem; padding:3px 10px; border-radius:8px; display:inline-block; }
+.diff-easy { background:rgba(76,255,142,0.15); color:var(--correct); }
+.diff-medium { background:rgba(255,204,0,0.15); color:var(--accent); }
+.diff-hard { background:rgba(255,107,107,0.15); color:var(--wrong); }
+.diff-expert { background:rgba(224,64,251,0.2); color:#e040fb; }
+.sb-streak { font-family:'Fredoka One',cursive; font-size:0.85rem; color:#ff9100; margin-top:2px; }
+.sb-diff { font-size:0.7rem; opacity:0.5; margin-top:1px; }
+.difficulty-flash { position:fixed; z-index:102; top:10%; left:50%; transform:translateX(-50%) scale(0); font-family:'Fredoka One',cursive; font-size:1.3rem; padding:10px 28px; border-radius:50px; pointer-events:none; animation:diffFlash 2s ease-out forwards; white-space:nowrap; }
+@keyframes diffFlash { 0%{transform:translateX(-50%) scale(0);opacity:0;} 12%{transform:translateX(-50%) scale(1.15);opacity:1;} 25%,65%{transform:translateX(-50%) scale(1);opacity:1;} 100%{transform:translateX(-50%) scale(0.8);opacity:0;} }
+.diff-flash-up { background:linear-gradient(135deg,rgba(255,100,0,0.9),rgba(255,200,0,0.9)); color:#fff; text-shadow:0 0 12px rgba(255,100,0,0.5); }
+.diff-flash-expert { background:linear-gradient(135deg,rgba(108,99,255,0.9),rgba(224,64,251,0.9)); color:#fff; text-shadow:0 0 12px rgba(224,64,251,0.5); }
+.diff-flash-down { background:rgba(255,255,255,0.12); color:rgba(255,255,255,0.6); font-size:1rem; }
+
+/* language switcher */
+.lang-switcher { display:flex; gap:8px; position:absolute; top:16px; right:16px; z-index:10; }
+.lang-btn { font-family:'Fredoka One',cursive; font-size:0.85rem; padding:6px 14px; border:2px solid rgba(255,255,255,0.15); border-radius:10px; background:transparent; color:var(--text); cursor:pointer; opacity:0.5; transition:all 0.2s; }
+.lang-btn.active { border-color:var(--accent); background:rgba(255,204,0,0.15); color:var(--accent); opacity:1; }
+.lang-btn:hover { opacity:0.8; }
+
+/* game settings */
+.game-settings { width:100%; max-width:380px; background:rgba(255,255,255,0.06); border:2px solid rgba(255,255,255,0.1); border-radius:16px; padding:14px 14px 12px; }
+.settings-title { font-family:'Fredoka One',cursive; font-size:0.95rem; color:var(--accent); margin-bottom:10px; }
+.settings-group { margin-bottom:10px; }
+.settings-label { font-size:0.8rem; opacity:0.6; margin-bottom:5px; }
+.ops-row { display:flex; gap:8px; justify-content:center; }
+.ops-btn { font-family:'Fredoka One',cursive; font-size:0.95rem; padding:7px 16px; border:2px solid rgba(255,255,255,0.15); border-radius:12px; background:transparent; color:var(--text); cursor:pointer; transition:all 0.15s; opacity:0.4; }
+.ops-btn.active { border-color:var(--correct); background:rgba(76,255,142,0.15); color:var(--correct); opacity:1; }
+.range-row { display:flex; align-items:center; gap:10px; justify-content:center; }
+.range-input { font-family:'Fredoka One',cursive; font-size:1rem; width:60px; text-align:center; padding:5px; border:2px solid rgba(255,255,255,0.15); border-radius:10px; background:rgba(255,255,255,0.08); color:var(--accent); outline:none; -moz-appearance:textfield; }
+.range-input::-webkit-outer-spin-button, .range-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.range-input:focus { border-color:#e040fb; }
+.range-dash { font-family:'Fredoka One',cursive; font-size:0.85rem; opacity:0.5; }
+.presets-row { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+.preset-btn { font-family:'Fredoka One',cursive; font-size:0.78rem; padding:5px 11px; border:2px solid rgba(255,255,255,0.15); border-radius:10px; background:transparent; color:var(--text); cursor:pointer; transition:all 0.15s; }
+.preset-btn.active { border-color:var(--accent); background:rgba(255,204,0,0.15); color:var(--accent); }
+
+/* celebrations */
+.celebration-overlay { position:fixed; top:0; left:0; width:100%; height:100%; z-index:100; pointer-events:none; overflow:hidden; }
+.particle { position:absolute; border-radius:50%; animation:pop 1s ease-out forwards; }
+@keyframes pop { 0%{opacity:1;transform:translate(0,0) scale(1);} 100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0.2);} }
+.star-burst { position:absolute; font-size:1.8rem; pointer-events:none; animation:starScatter 1.2s ease-out forwards; }
+@keyframes starScatter { 0%{opacity:1;transform:translate(0,0) scale(0.5) rotate(0deg);} 50%{opacity:1;transform:translate(var(--dx),var(--dy)) scale(1.2) rotate(180deg);} 100%{opacity:0;transform:translate(calc(var(--dx)*1.3),calc(var(--dy)*1.3)) scale(0.3) rotate(360deg);} }
+.rocket-launch { position:fixed; z-index:101; font-size:4rem; pointer-events:none; animation:rocketUp 1.2s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes rocketUp { 0%{opacity:1;transform:translateY(0) scale(1);} 15%{transform:translateY(5px) scale(1.1);} 100%{opacity:0;transform:translateY(-110vh) scale(0.7);} }
+.exhaust { position:fixed; z-index:100; pointer-events:none; width:6px; border-radius:3px; animation:exhaustFade 0.6s ease-out forwards; }
+@keyframes exhaustFade { 0%{opacity:0.9;height:30px;} 100%{opacity:0;height:60px;transform:translateY(20px);} }
+.shooting-star { position:fixed; z-index:101; pointer-events:none; width:4px; height:4px; background:#fff; border-radius:50%; box-shadow:0 0 6px 2px rgba(255,255,255,0.6),-20px 0 12px 2px rgba(255,200,0,0.3); animation:shoot 0.8s linear forwards; }
+@keyframes shoot { 0%{opacity:1;transform:translate(0,0);} 100%{opacity:0;transform:translate(var(--sx),var(--sy));} }
+.combo-banner { position:fixed; z-index:102; top:30%; left:50%; transform:translate(-50%,-50%) scale(0); font-family:'Fredoka One',cursive; font-size:2rem; color:#fff; text-shadow:0 0 20px rgba(255,100,0,0.8); pointer-events:none; animation:comboPop 1.4s ease-out forwards; white-space:nowrap; background:linear-gradient(135deg,rgba(255,100,0,0.85),rgba(255,60,0,0.85)); padding:10px 28px; border-radius:50px; }
+@keyframes comboPop { 0%{transform:translate(-50%,-50%) scale(0);opacity:0;} 20%{transform:translate(-50%,-50%) scale(1.3);opacity:1;} 40%,80%{transform:translate(-50%,-50%) scale(1);opacity:1;} 100%{transform:translate(-50%,-60%) scale(0.8);opacity:0;} }
+
+@media (max-width:480px) {
+  .title { font-size:1.7rem; }
+  .problem-text { font-size:2.4rem; }
+  .answer-display { font-size:2.6rem; height:44px; }
+  .hero-emoji { font-size:3.2rem; }
+  #screen-sp-setup .hero-emoji, #screen-lobby .hero-emoji { font-size:2.2rem; }
+  #screen-sp-setup .title, #screen-lobby .title { font-size:1.5rem; }
+  .combo-banner { font-size:1.4rem; padding:8px 22px; top:25%; }
+  .difficulty-flash { font-size:1.1rem; padding:8px 20px; }
+  .sb-score { font-size:1.3rem; }
+  .host-box { font-size:0.85rem; }
+  .mode-card { min-width:150px; padding:18px 12px; }
+  .sp-star-counter { font-size:1.3rem; }
+  .sp-streak { font-size:0.85rem; }
+  .sp-round-label { font-size:0.85rem; }
+  .problem-box { padding:20px 16px; border-radius:20px; }
+  .feedback { min-height:36px; font-size:1.05rem; }
+  .keyboard-hint { font-size:0.8rem; }
+  .game-settings { padding:10px 12px; }
+  .settings-title { font-size:0.85rem; margin-bottom:8px; }
+  .settings-group { margin-bottom:8px; }
+  .ops-btn { font-size:0.85rem; padding:6px 12px; }
+  .range-input { width:52px; font-size:0.9rem; }
+  .preset-btn { font-size:0.72rem; padding:4px 9px; }
+  .text-input { font-size:1.2rem; padding:10px 14px; }
+  .btn { font-size:1.15rem; padding:12px 32px; }
+  #screen-sp-setup, #screen-lobby { gap:8px; }
+  #screen-sp-game, #screen-mp-game { gap:4px; }
+}
+</style>
+</head>
+<body>
+<canvas id="stars-canvas"></canvas>
+<div id="app">
+
+  <div class="lang-switcher">
+    <button class="lang-btn active" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="sr">СР</button>
+  </div>
+
+  <!-- ══ MODE SELECT ══ -->
+  <div class="screen active" id="screen-mode">
+    <div class="hero-emoji">🚀🪐⭐</div>
+    <div class="title">Space Math</div>
+    <div class="subtitle">Choose your mission!</div>
+    <div class="mode-buttons">
+      <div class="mode-card" id="mode-single">
+        <div class="mode-icon">👨‍🚀</div>
+        <div class="mode-title">Solo Mission</div>
+        <div class="mode-desc">Practice on your own</div>
+      </div>
+      <div class="mode-card" id="mode-multi">
+        <div class="mode-icon">👨‍🚀🧑‍🚀</div>
+        <div class="mode-title">Space Race</div>
+        <div class="mode-desc">Two players over network</div>
+      </div>
+    </div>
+    <div class="leaderboard" id="leaderboard-home"></div>
+  </div>
+
+  <!-- ══ SINGLE PLAYER SETUP ══ -->
+  <div class="screen" id="screen-sp-setup">
+    <div class="hero-emoji">👨‍🚀</div>
+    <div class="title">Solo Mission</div>
+    <div class="subtitle" id="sp-subtitle">What's your name, astronaut?</div>
+    <div class="summary-total" id="sp-stats" style="display:none"></div>
+    <input type="text" class="text-input" id="sp-name" placeholder="Your name" maxlength="20" autocomplete="off">
+    <input type="password" class="text-input" id="sp-password" placeholder="Password 🔒" maxlength="30" autocomplete="off" style="margin-top:-4px">
+    <div id="sp-login-error" style="color:var(--wrong);font-weight:800;min-height:18px;font-size:0.9rem"></div>
+    <div class="timer-option">
+      <span style="font-weight:800">Timer:</span>
+      <button class="toggle" id="sp-timer-toggle"></button>
+      <div class="timer-choices" id="sp-timer-choices" style="display:none">
+        <button data-sec="5">5s</button>
+        <button data-sec="10" class="active">10s</button>
+        <button data-sec="15">15s</button>
+      </div>
+    </div>
+    <div class="game-settings" id="sp-game-settings">
+      <div class="settings-title" id="sp-settings-title">Game Settings</div>
+      <div class="settings-group">
+        <div class="settings-label" id="sp-ops-label">Operations</div>
+        <div class="ops-row" id="sp-ops-row">
+          <button class="ops-btn active" data-op="+">➕ Addition</button>
+          <button class="ops-btn active" data-op="−">➖ Subtraction</button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-label" id="sp-range-label">Number Range</div>
+        <div class="range-row">
+          <input type="number" class="range-input" id="sp-range-min" value="1" min="1" max="99">
+          <span class="range-dash" id="sp-range-dash">to</span>
+          <input type="number" class="range-input" id="sp-range-max" value="20" min="2" max="100">
+        </div>
+      </div>
+      <div class="settings-group" style="margin-bottom:0">
+        <div class="settings-label" id="sp-presets-label">Presets</div>
+        <div class="presets-row" id="sp-presets-row">
+          <button class="preset-btn" data-preset="starter">Starter</button>
+          <button class="preset-btn active" data-preset="classic">Classic</button>
+          <button class="preset-btn" data-preset="challenge">Challenge</button>
+          <button class="preset-btn" data-preset="expert">Expert</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn" id="sp-start">Start! 🚀</button>
+    <button class="btn" id="sp-back" style="font-size:1rem;padding:10px 24px;background:rgba(255,255,255,0.1)">← Back</button>
+  </div>
+
+  <!-- ══ SINGLE PLAYER GAME ══ -->
+  <div class="screen" id="screen-sp-game">
+    <div class="sp-header">
+      <span class="sp-round-label" id="sp-round-label"></span>
+      <span class="sp-player-name" id="sp-player-name" style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--accent)"></span>
+      <span class="sp-star-counter">⭐ <span id="sp-star-count">0</span> <span class="sp-streak" id="sp-streak"></span></span>
+    </div>
+    <div style="text-align:center"><span class="sp-diff-label" id="sp-diff-label"></span></div>
+    <div class="progress-bar"><div class="progress-fill" id="sp-progress-fill" style="width:0%"></div></div>
+    <div class="timer-bar" id="sp-timer-bar" style="display:none">
+      <div class="timer-fill" id="sp-timer-fill"></div>
+    </div>
+    <div class="problem-box" id="sp-problem-box">
+      <div class="problem-text" id="sp-problem-text"></div>
+      <div class="answer-display" id="sp-answer-display"><span class="cursor"></span></div>
+    </div>
+    <div class="feedback" id="sp-feedback">&nbsp;</div>
+    <div class="keyboard-hint" id="sp-keyboard-hint">Type your answer and press Enter ⌨️</div>
+    <div class="mission-briefing" id="sp-briefing">
+      <div class="briefing-header">👨‍🚀 Mission Briefing</div>
+      <div class="briefing-answer" id="sp-briefing-answer"></div>
+      <div class="briefing-tip" id="sp-briefing-tip"></div>
+      <button class="btn-got-it" id="sp-got-it">Got it! ➡️</button>
+    </div>
+  </div>
+
+  <!-- ══ SINGLE PLAYER SUMMARY ══ -->
+  <div class="screen" id="screen-sp-end">
+    <div class="hero-emoji">🏆</div>
+    <div class="title" id="sp-end-title"></div>
+    <div class="summary-stars" id="sp-end-stars"></div>
+    <div class="summary-msg" id="sp-end-msg"></div>
+    <div class="summary-total" id="sp-end-total"></div>
+    <div class="leaderboard" id="leaderboard-sp-end"></div>
+    <button class="btn" id="sp-again">New Round! 🚀</button>
+    <button class="btn" id="sp-home" style="font-size:1rem;padding:10px 24px;background:rgba(255,255,255,0.1)">← Main Menu</button>
+  </div>
+
+  <!-- ══ MULTIPLAYER: CONNECTING ══ -->
+  <div class="screen" id="screen-connecting">
+    <div class="hero-emoji">🚀</div>
+    <div class="title">Space Math</div>
+    <div class="subtitle" id="connecting-msg">Connecting to server...</div>
+    <button class="btn" id="mp-back" style="font-size:1rem;padding:10px 24px;background:rgba(255,255,255,0.1)">← Back</button>
+  </div>
+
+  <!-- ══ MULTIPLAYER: LOBBY ══ -->
+  <div class="screen" id="screen-lobby">
+    <div class="hero-emoji">👨‍🚀🧑‍🚀</div>
+    <div class="title">Space Race</div>
+    <div class="subtitle" id="lobby-subtitle">Two-player space race!</div>
+    <div class="host-box" id="host-box" style="display:none"></div>
+    <div class="player-status">
+      <div class="player-badge" id="badge-1"><div class="badge-icon">👨‍🚀</div><div class="badge-name" id="badge-name-1">Player 1</div><div class="badge-status" id="badge-status-1">Waiting...</div></div>
+      <div class="player-badge" id="badge-2"><div class="badge-icon">🧑‍🚀</div><div class="badge-name" id="badge-name-2">Player 2</div><div class="badge-status" id="badge-status-2">Waiting...</div></div>
+    </div>
+    <div class="setup-row">
+      <span class="setup-label">Name:</span>
+      <input type="text" class="text-input" id="mp-name-input" placeholder="Your name" maxlength="20" autocomplete="off" style="max-width:220px">
+    </div>
+    <div class="timer-option">
+      <span style="font-weight:800">Timer:</span>
+      <button class="toggle" id="mp-timer-toggle"></button>
+      <div class="timer-choices" id="mp-timer-choices" style="display:none">
+        <button data-sec="5">5s</button>
+        <button data-sec="10" class="active">10s</button>
+        <button data-sec="15">15s</button>
+      </div>
+    </div>
+    <div class="game-settings" id="mp-game-settings">
+      <div class="settings-title" id="mp-settings-title">Game Settings</div>
+      <div class="settings-group">
+        <div class="settings-label" id="mp-ops-label">Operations</div>
+        <div class="ops-row" id="mp-ops-row">
+          <button class="ops-btn active" data-op="+">➕ Addition</button>
+          <button class="ops-btn active" data-op="−">➖ Subtraction</button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-label" id="mp-range-label">Number Range</div>
+        <div class="range-row">
+          <input type="number" class="range-input" id="mp-range-min" value="1" min="1" max="99">
+          <span class="range-dash" id="mp-range-dash">to</span>
+          <input type="number" class="range-input" id="mp-range-max" value="20" min="2" max="100">
+        </div>
+      </div>
+      <div class="settings-group" style="margin-bottom:0">
+        <div class="settings-label" id="mp-presets-label">Presets</div>
+        <div class="presets-row" id="mp-presets-row">
+          <button class="preset-btn" data-preset="starter">Starter</button>
+          <button class="preset-btn active" data-preset="classic">Classic</button>
+          <button class="preset-btn" data-preset="challenge">Challenge</button>
+          <button class="preset-btn" data-preset="expert">Expert</button>
+        </div>
+      </div>
+    </div>
+    <div class="small-note" id="timer-note">Only the host can start the game</div>
+    <button class="btn" id="btn-mp-start" style="display:none">Start Game! 🚀</button>
+    <div class="subtitle" id="lobby-wait" style="display:none">Waiting for host to start...</div>
+    <div class="leaderboard" id="leaderboard-lobby"></div>
+  </div>
+
+  <!-- ══ MULTIPLAYER: GAME ══ -->
+  <div class="screen" id="screen-mp-game">
+    <div class="scoreboard" id="mp-scoreboard"></div>
+    <div class="progress-bar"><div class="progress-fill" id="mp-progress-fill" style="width:0%"></div></div>
+    <div class="timer-bar" id="mp-timer-bar" style="display:none"><div class="timer-fill" id="mp-timer-fill"></div></div>
+    <div class="problem-box" id="mp-problem-box">
+      <div class="problem-text" id="mp-problem-text"></div>
+      <div class="answer-display" id="mp-answer-display"><span class="cursor"></span></div>
+    </div>
+    <div class="feedback" id="mp-feedback">&nbsp;</div>
+    <div class="keyboard-hint" id="mp-keyboard-hint">Type your answer and press Enter ⌨️</div>
+    <div class="mission-briefing" id="mp-briefing">
+      <div class="briefing-header">👨‍🚀 Mission Briefing</div>
+      <div class="briefing-answer" id="mp-briefing-answer"></div>
+      <div class="briefing-tip" id="mp-briefing-tip"></div>
+    </div>
+  </div>
+
+  <!-- ══ MULTIPLAYER: ROUND END ══ -->
+  <div class="screen" id="screen-mp-end">
+    <div class="hero-emoji" id="mp-end-emoji">🏆</div>
+    <div class="title" id="mp-end-title"></div>
+    <div class="winner-name" id="mp-end-winner"></div>
+    <div class="final-scores" id="mp-end-scores"></div>
+    <div class="leaderboard" id="leaderboard-mp-end"></div>
+    <button class="btn" id="btn-mp-again" style="display:none">Play Again! 🚀</button>
+    <div class="subtitle" id="mp-end-wait" style="display:none">Waiting for host to start...</div>
+    <button class="btn" id="mp-end-home" style="font-size:1rem;padding:10px 24px;background:rgba(255,255,255,0.1)">← Main Menu</button>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  SHARED UTILITIES
+// ════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+function pick(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+function escapeHTML(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// ════════════════════════════════════════════
+//  TRANSLATIONS
+// ════════════════════════════════════════════
+let currentLang = localStorage.getItem('spaceMathLang') || 'en';
+
+const LANG = {
+  en: {
+    pageTitle: 'Space Math',
+    chooseYourMission: 'Choose your mission!',
+    soloMission: 'Solo Mission',
+    practiceOnYourOwn: 'Practice on your own',
+    spaceRace: 'Space Race',
+    twoPlayersNetwork: 'Two players over network',
+    whatsYourName: "What's your name, astronaut?",
+    welcomeBack: name => `Welcome back, ${name}!`,
+    starsRounds: (stars, rounds) => `⭐ ${stars} stars · ${rounds} rounds played`,
+    yourName: 'Your name',
+    password: 'Password 🔒',
+    timer: 'Timer:',
+    start: 'Start! 🚀',
+    back: '← Back',
+    newRound: 'New Round! 🚀',
+    mainMenu: '← Main Menu',
+    typeAnswer: 'Type your answer and press Enter ⌨️',
+    missionBriefing: '👨‍🚀 Mission Briefing',
+    gotIt: 'Got it! ➡️',
+    connectingToServer: 'Connecting to server...',
+    disconnectedReconnecting: 'Disconnected. Reconnecting...',
+    cannotConnect: 'Cannot connect. Is the server running?',
+    gameFull: 'Game is full! Two players already connected.',
+    twoPlayerRace: 'Two-player space race!',
+    youAreHost: (ip, port) => `You are the <strong>host!</strong> Share this address:<br><code>http://${ip}:${port}</code>`,
+    onlyHostStart: 'Only the host can start the game',
+    onlyHostConfigure: 'Only the host can configure the timer and start',
+    startGame: 'Start Game! 🚀',
+    waitingForHost: 'Waiting for host to start...',
+    ready: 'Ready! ✅',
+    waiting: 'Waiting...',
+    playAgain: 'Play Again! 🚀',
+    player: s => 'Player ' + s,
+    playerDefault: 'Player',
+    name: 'Name:',
+    leaderboardTitle: '🏆 Leaderboard',
+    noScores: 'No scores yet!',
+    you: '(you)',
+    enterName: 'Please enter your name!',
+    enterPassword: 'Please enter a password!',
+    wrongPassword: 'Wrong password! Try again 🔒',
+    disconnected: name => `${name} disconnected!`,
+    correctFeedback: name => pick([`Great job, ${name}! 🚀`, 'Amazing! 🌟', 'Correct! ⭐', `Fantastic, ${name}! 🪐`, 'Perfect! 🎉', 'Brilliant! 👨‍🚀']),
+    mpCorrectFeedback: () => pick(['Great job! 🚀', 'Amazing! 🌟', 'Correct! ⭐', 'Fantastic! 🪐', 'Perfect! 🎉']),
+    gotItFirst: (name, answer) => `${name} got it first! Answer: ${answer}`,
+    notQuiteWaiting: 'Not quite! Waiting for other player... 💪',
+    stealChance: name => `${name} missed it — your chance to steal! 🔥`,
+    youWin: 'You win this round!',
+    theyWin: name => `${name} wins!`,
+    itsTie: "It's a tie!",
+    summaryIncredible: name => `Incredible, ${name}! 🏆`,
+    summaryGreat: name => `Great work, ${name}! 🌟`,
+    summaryGood: name => `Good effort, ${name}! 💪`,
+    earnedStars: (stars, total) => `You earned ${stars} out of ${total} stars!`,
+    perfectRound: " Perfect round! You're a true astronaut! 👨‍🚀",
+    totalStars: stars => `Total stars: ${stars} ⭐`,
+    combo: n => `${n}x Combo! 🔥🚀`,
+    briefingIntro: () => pick(["Here's how to solve it next time:", "Let's learn a trick for this one:", "Here's a cool way to figure it out:"]),
+    mpBriefingIntro: () => pick(["Here's how to solve it:", "A trick for this one:", "A cool way to figure it out:"]),
+    // teaching tips
+    tipNearDoubles: (a, b, sm, answer) => `<strong>Near doubles:</strong> ${a}+${b} is like ${sm}+${sm}=${sm*2}, plus 1 more = <strong>${answer}</strong> 🌟`,
+    tipDoubles: (a, b, answer) => `<strong>Doubles:</strong> ${a}+${b} is a double! ${a}+${a} = <strong>${answer}</strong> 🎯`,
+    tipMake10: (bg, t, l, answer) => `<strong>Make a 10:</strong> ${bg}+${t}=10, then 10+${l} = <strong>${answer}</strong> 🚀`,
+    tipAdd10: (o, answer) => `<strong>Adding to 10:</strong> 10+${o} = <strong>${answer}</strong>! 🪐`,
+    tipCountUp: (bg, sm, steps, answer) => `<strong>Count up:</strong> Start at ${bg}, count up ${sm}: ${steps} = <strong>${answer}</strong> ✋`,
+    tipTakeFrom10: (b, answer) => `<strong>Take from 10:</strong> 10−${b} = <strong>${answer}</strong>. Use your fingers! ✋`,
+    tipGoThrough10: (a, t, r, answer) => `<strong>Go through 10:</strong> ${a}−${t}=10, then 10−${r} = <strong>${answer}</strong> 🚀`,
+    tipFindGap: (b, a, steps, answer) => `<strong>Find the gap:</strong> Count up from ${b} to ${a}: ${steps} = ${answer} steps = <strong>${answer}</strong> 🔭`,
+    tipCountBack: (a, b, steps, answer) => `<strong>Count back:</strong> Start at ${a}, count back ${b}: ${steps} = <strong>${answer}</strong> ✋`,
+    tipTwoStep: (a, op1, b, mid, op2, c, answer) => `<strong>Step by step:</strong> First, ${a} ${op1} ${b} = ${mid}. Then ${mid} ${op2} ${c} = <strong>${answer}</strong> 🧠`,
+    // difficulty
+    diffEasy: 'Easy',
+    diffMedium: 'Medium',
+    diffHard: 'Hard',
+    diffExpert: 'Expert',
+    diffUpMedium: '🔥 Heating up!',
+    diffUpHard: '🔥🔥 On fire!',
+    diffUpExpert: '⚡ Expert mode!',
+    diffDown: '📉 Back to basics',
+    vs: 'VS',
+    // game settings
+    gameSettings: 'Game Settings',
+    settingsOps: 'Operations',
+    settingsRange: 'Number Range',
+    settingsPresets: 'Presets',
+    settingsRangeTo: 'to',
+    presetStarter: 'Starter',
+    presetClassic: 'Classic',
+    presetChallenge: 'Challenge',
+    presetExpert: 'Expert',
+    opAddition: '➕ Addition',
+    opSubtraction: '➖ Subtraction',
+    selectOneOp: 'Select at least one operation!',
+  },
+  sr: {
+    pageTitle: 'Свемирска Математика',
+    chooseYourMission: 'Изабери своју мисију!',
+    soloMission: 'Соло Мисија',
+    practiceOnYourOwn: 'Вежбај самостално',
+    spaceRace: 'Свемирска Трка',
+    twoPlayersNetwork: 'Два играча преко мреже',
+    whatsYourName: 'Како се зовеш, астронауте?',
+    welcomeBack: name => `Добро дошао назад, ${name}!`,
+    starsRounds: (stars, rounds) => `⭐ ${stars} звездица · ${rounds} кругова одиграно`,
+    yourName: 'Твоје име',
+    password: 'Лозинка 🔒',
+    timer: 'Тајмер:',
+    start: 'Почни! 🚀',
+    back: '← Назад',
+    newRound: 'Нови Круг! 🚀',
+    mainMenu: '← Главни Мени',
+    typeAnswer: 'Укуцај одговор и притисни Ентер ⌨️',
+    missionBriefing: '👨‍🚀 Извештај са Мисије',
+    gotIt: 'Разумем! ➡️',
+    connectingToServer: 'Повезивање на сервер...',
+    disconnectedReconnecting: 'Веза прекинута. Поновно повезивање...',
+    cannotConnect: 'Не могу да се повежем. Да ли сервер ради?',
+    gameFull: 'Игра је пуна! Два играча су већ повезана.',
+    twoPlayerRace: 'Свемирска трка за двоје!',
+    youAreHost: (ip, port) => `Ти си <strong>домаћин!</strong> Подели ову адресу:<br><code>http://${ip}:${port}</code>`,
+    onlyHostStart: 'Само домаћин може да покрене игру',
+    onlyHostConfigure: 'Само домаћин може да подеси тајмер и покрене игру',
+    startGame: 'Покрени Игру! 🚀',
+    waitingForHost: 'Чекам домаћина да покрене...',
+    ready: 'Спреман! ✅',
+    waiting: 'Чекам...',
+    playAgain: 'Играј Поново! 🚀',
+    player: s => 'Играч ' + s,
+    playerDefault: 'Играч',
+    name: 'Име:',
+    leaderboardTitle: '🏆 Табела Победника',
+    noScores: 'Нема резултата!',
+    you: '(ти)',
+    enterName: 'Унеси своје име!',
+    enterPassword: 'Унеси лозинку!',
+    wrongPassword: 'Погрешна лозинка! Покушај поново 🔒',
+    disconnected: name => `${name} се искључио!`,
+    correctFeedback: name => pick([`Браво, ${name}! 🚀`, 'Одлично! 🌟', 'Тачно! ⭐', `Фантастично, ${name}! 🪐`, 'Савршено! 🎉', 'Бриљантно! 👨‍🚀']),
+    mpCorrectFeedback: () => pick(['Браво! 🚀', 'Одлично! 🌟', 'Тачно! ⭐', 'Фантастично! 🪐', 'Савршено! 🎉']),
+    gotItFirst: (name, answer) => `${name} је први одговорио! Одговор: ${answer}`,
+    notQuiteWaiting: 'Није тачно! Чекам другог играча... 💪',
+    stealChance: name => `${name} је промашио — твоја шанса! 🔥`,
+    youWin: 'Победио си у овом кругу!',
+    theyWin: name => `${name} побеђује!`,
+    itsTie: 'Нерешено!',
+    summaryIncredible: name => `Невероватно, ${name}! 🏆`,
+    summaryGreat: name => `Одличан посао, ${name}! 🌟`,
+    summaryGood: name => `Добар покушај, ${name}! 💪`,
+    earnedStars: (stars, total) => `Освојио си ${stars} од ${total} звездица!`,
+    perfectRound: ' Савршен круг! Прави си астронаут! 👨‍🚀',
+    totalStars: stars => `Укупно звездица: ${stars} ⭐`,
+    combo: n => `${n}x Комбо! 🔥🚀`,
+    briefingIntro: () => pick(['Ево како да решиш следећи пут:', 'Научи трик за ово:', 'Ево једног кул начина:']),
+    mpBriefingIntro: () => pick(['Ево решења:', 'Трик за ово:', 'Кул начин да решиш:']),
+    // teaching tips
+    tipNearDoubles: (a, b, sm, answer) => `<strong>Скоро дупли:</strong> ${a}+${b} је као ${sm}+${sm}=${sm*2}, плус још 1 = <strong>${answer}</strong> 🌟`,
+    tipDoubles: (a, b, answer) => `<strong>Дупли бројеви:</strong> ${a}+${b} је дупли! ${a}+${a} = <strong>${answer}</strong> 🎯`,
+    tipMake10: (bg, t, l, answer) => `<strong>Направи 10:</strong> ${bg}+${t}=10, па онда 10+${l} = <strong>${answer}</strong> 🚀`,
+    tipAdd10: (o, answer) => `<strong>Додај на 10:</strong> 10+${o} = <strong>${answer}</strong>! 🪐`,
+    tipCountUp: (bg, sm, steps, answer) => `<strong>Бројање навише:</strong> Крени од ${bg}, бројиш ${sm}: ${steps} = <strong>${answer}</strong> ✋`,
+    tipTakeFrom10: (b, answer) => `<strong>Одузми од 10:</strong> 10−${b} = <strong>${answer}</strong>. Користи прсте! ✋`,
+    tipGoThrough10: (a, t, r, answer) => `<strong>Прођи кроз 10:</strong> ${a}−${t}=10, па онда 10−${r} = <strong>${answer}</strong> 🚀`,
+    tipFindGap: (b, a, steps, answer) => `<strong>Нађи разлику:</strong> Бројиш од ${b} до ${a}: ${steps} = ${answer} корака = <strong>${answer}</strong> 🔭`,
+    tipCountBack: (a, b, steps, answer) => `<strong>Бројање уназад:</strong> Крени од ${a}, бројиш уназад ${b}: ${steps} = <strong>${answer}</strong> ✋`,
+    tipTwoStep: (a, op1, b, mid, op2, c, answer) => `<strong>Корак по корак:</strong> Прво, ${a} ${op1} ${b} = ${mid}. Онда ${mid} ${op2} ${c} = <strong>${answer}</strong> 🧠`,
+    // difficulty
+    diffEasy: 'Лако',
+    diffMedium: 'Средње',
+    diffHard: 'Тешко',
+    diffExpert: 'Експерт',
+    diffUpMedium: '🔥 Загревање!',
+    diffUpHard: '🔥🔥 Гориш!',
+    diffUpExpert: '⚡ Експертски мод!',
+    diffDown: '📉 Испочетка',
+    vs: 'ПРОТИВ',
+    // game settings
+    gameSettings: 'Подешавања Игре',
+    settingsOps: 'Операције',
+    settingsRange: 'Опсег Бројева',
+    settingsPresets: 'Шаблони',
+    settingsRangeTo: 'до',
+    presetStarter: 'Почетни',
+    presetClassic: 'Класик',
+    presetChallenge: 'Изазов',
+    presetExpert: 'Експерт',
+    opAddition: '➕ Сабирање',
+    opSubtraction: '➖ Одузимање',
+    selectOneOp: 'Изабери бар једну операцију!',
+  }
+};
+
+function t(key) { return LANG[currentLang][key]; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('spaceMathLang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  applyLanguage();
+}
+
+function applyLanguage() {
+  document.title = t('pageTitle');
+  // Mode screen
+  document.querySelector('#screen-mode .title').textContent = t('pageTitle');
+  document.querySelector('#screen-mode .subtitle').textContent = t('chooseYourMission');
+  document.querySelector('#mode-single .mode-title').textContent = t('soloMission');
+  document.querySelector('#mode-single .mode-desc').textContent = t('practiceOnYourOwn');
+  document.querySelector('#mode-multi .mode-title').textContent = t('spaceRace');
+  document.querySelector('#mode-multi .mode-desc').textContent = t('twoPlayersNetwork');
+  // SP setup
+  document.querySelector('#screen-sp-setup .title').textContent = t('soloMission');
+  $('sp-name').placeholder = t('yourName');
+  $('sp-password').placeholder = t('password');
+  document.querySelector('#screen-sp-setup .timer-option span').textContent = t('timer');
+  $('sp-start').textContent = t('start');
+  $('sp-back').textContent = t('back');
+  // SP game settings
+  $('sp-settings-title').textContent = t('gameSettings');
+  $('sp-ops-label').textContent = t('settingsOps');
+  $('sp-range-label').textContent = t('settingsRange');
+  $('sp-range-dash').textContent = t('settingsRangeTo');
+  $('sp-presets-label').textContent = t('settingsPresets');
+  $('sp-ops-row').querySelectorAll('.ops-btn').forEach(b => b.textContent = b.dataset.op === '+' ? t('opAddition') : t('opSubtraction'));
+  $('sp-presets-row').querySelectorAll('.preset-btn').forEach(b => b.textContent = t('preset' + b.dataset.preset.charAt(0).toUpperCase() + b.dataset.preset.slice(1)));
+  // SP game
+  $('sp-keyboard-hint').textContent = t('typeAnswer');
+  document.querySelector('#sp-briefing .briefing-header').textContent = t('missionBriefing');
+  $('sp-got-it').textContent = t('gotIt');
+  // SP end
+  $('sp-again').textContent = t('newRound');
+  $('sp-home').textContent = t('mainMenu');
+  // Connecting
+  document.querySelector('#screen-connecting .title').textContent = t('pageTitle');
+  $('mp-back').textContent = t('back');
+  // Lobby
+  document.querySelector('#screen-lobby .title').textContent = t('spaceRace');
+  $('lobby-subtitle').textContent = t('twoPlayerRace');
+  document.querySelector('#screen-lobby .setup-label').textContent = t('name');
+  $('mp-name-input').placeholder = t('yourName');
+  document.querySelector('#screen-lobby .timer-option span').textContent = t('timer');
+  if (mySlot === '1') $('timer-note').textContent = '';
+  else if (mySlot === '2') $('timer-note').textContent = t('onlyHostConfigure');
+  else $('timer-note').textContent = t('onlyHostStart');
+  // MP game settings
+  $('mp-settings-title').textContent = t('gameSettings');
+  $('mp-ops-label').textContent = t('settingsOps');
+  $('mp-range-label').textContent = t('settingsRange');
+  $('mp-range-dash').textContent = t('settingsRangeTo');
+  $('mp-presets-label').textContent = t('settingsPresets');
+  $('mp-ops-row').querySelectorAll('.ops-btn').forEach(b => b.textContent = b.dataset.op === '+' ? t('opAddition') : t('opSubtraction'));
+  $('mp-presets-row').querySelectorAll('.preset-btn').forEach(b => b.textContent = t('preset' + b.dataset.preset.charAt(0).toUpperCase() + b.dataset.preset.slice(1)));
+  $('btn-mp-start').textContent = t('startGame');
+  $('lobby-wait').textContent = t('waitingForHost');
+  // MP game
+  $('mp-keyboard-hint').textContent = t('typeAnswer');
+  document.querySelector('#mp-briefing .briefing-header').textContent = t('missionBriefing');
+  // MP end
+  $('btn-mp-again').textContent = t('playAgain');
+  $('mp-end-wait').textContent = t('waitingForHost');
+  $('mp-end-home').textContent = t('mainMenu');
+  // SP setup subtitle (context-dependent)
+  const saved = localStorage.getItem('spaceMathName');
+  if (saved) {
+    const lb = getSPLeaderboard(), e = lb.find(x => x.name.toLowerCase() === saved.toLowerCase());
+    if (e) {
+      $('sp-subtitle').textContent = LANG[currentLang].welcomeBack(saved);
+      $('sp-stats').textContent = LANG[currentLang].starsRounds(e.stars, e.rounds);
+    } else {
+      $('sp-subtitle').textContent = t('whatsYourName');
+    }
+  } else {
+    $('sp-subtitle').textContent = t('whatsYourName');
+  }
+  // Connecting screen
+  $('connecting-msg').textContent = t('connectingToServer');
+  // Lobby host box
+  if (mySlot === '1' && mpHostIp) {
+    $('host-box').innerHTML = LANG[currentLang].youAreHost(mpHostIp, mpHostPort);
+  }
+  // Lobby badges
+  for (const s of ['1', '2']) {
+    const nameEl = $('badge-name-' + s);
+    const statusEl = $('badge-status-' + s);
+    const badge = $('badge-' + s);
+    if (badge.classList.contains('connected')) {
+      statusEl.textContent = t('ready');
+    } else {
+      nameEl.textContent = LANG[currentLang].player(s);
+      statusEl.textContent = t('waiting');
+    }
+  }
+  // Re-render MP scoreboard if in MP game
+  if ($('screen-mp-game').classList.contains('active')) {
+    // Scoreboard will update on next problem/event; force re-render of current state
+    const sbEl = $('mp-scoreboard');
+    if (sbEl.innerHTML) {
+      // Update (you) and VS labels in existing scoreboard
+      sbEl.querySelectorAll('.sb-vs').forEach(el => el.textContent = t('vs'));
+    }
+  }
+  // Re-render leaderboards that are visible
+  const activeScreen = document.querySelector('.screen.active');
+  if (activeScreen) {
+    const lbEl = activeScreen.querySelector('.leaderboard');
+    if (lbEl && lbEl.querySelector('.leaderboard-title')) {
+      lbEl.querySelector('.leaderboard-title').textContent = t('leaderboardTitle');
+      const emptyEl = lbEl.querySelector('.leaderboard-empty');
+      if (emptyEl) emptyEl.textContent = t('noScores');
+    }
+  }
+}
+
+// Language switcher clicks
+document.querySelector('.lang-switcher').addEventListener('click', e => {
+  const btn = e.target.closest('.lang-btn');
+  if (!btn) return;
+  SFX.tap();
+  setLang(btn.dataset.lang);
+});
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-'+name).classList.add('active');
+}
+
+// starfield
+(function(){
+  const c=$('stars-canvas'),ctx=c.getContext('2d'); let stars=[];
+  function resize(){c.width=innerWidth;c.height=innerHeight;stars=Array.from({length:120},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.8+0.3,a:Math.random(),da:(Math.random()-0.5)*0.015}));}
+  resize(); addEventListener('resize',resize);
+  (function draw(){ctx.clearRect(0,0,c.width,c.height);for(const s of stars){s.a+=s.da;if(s.a>1||s.a<0.15)s.da*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${s.a})`;ctx.fill();}requestAnimationFrame(draw);})();
+})();
+
+// sound
+const AudioCtx=window.AudioContext||window.webkitAudioContext; let audioCtx=null;
+function getAudio(){if(!audioCtx)audioCtx=new AudioCtx();return audioCtx;}
+function playTone(f,d,t,v,r){const ctx=getAudio(),o=ctx.createOscillator(),g=ctx.createGain();o.type=t||'sine';o.frequency.setValueAtTime(f,ctx.currentTime);if(r)o.frequency.linearRampToValueAtTime(r,ctx.currentTime+d);g.gain.setValueAtTime(v||0.18,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime);o.stop(ctx.currentTime+d);}
+const SFX={
+  tap(){playTone(880,0.06,'sine',0.13);},clear(){playTone(520,0.1,'sine',0.12,300);},
+  submit(){const ctx=getAudio(),t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(600,t);o.frequency.setValueAtTime(800,t+0.08);g.gain.setValueAtTime(0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.18);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.18);},
+  correct(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.18,'sine',0.16),i*80));},
+  wrong(){playTone(280,0.25,'triangle',0.12,220);},
+  combo(){[523,659,784,988,1175,1319].forEach((f,i)=>setTimeout(()=>playTone(f,0.13,'sine',0.14),i*55));},
+  reveal(){playTone(440,0.3,'sine',0.1);setTimeout(()=>playTone(554,0.3,'sine',0.08),150);},
+  start(){playTone(200,0.5,'sawtooth',0.08,1200);},
+  fanfare(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.3,'triangle',0.13),i*120));},
+  tick(){playTone(1000,0.03,'sine',0.06);},
+};
+
+// celebrations
+function celebrateCorrect(isCombo,comboNum){
+  const ov=document.createElement('div');ov.className='celebration-overlay';document.body.appendChild(ov);
+  const cx=innerWidth/2,cy=innerHeight/2,colors=['#ffcc00','#4cff8e','#e040fb','#6c63ff','#ff6b6b','#00e5ff','#ff9100'];
+  for(let i=0;i<(isCombo?50:30);i++){const p=document.createElement('div');p.className='particle';const sz=Math.random()*12+4,ang=Math.random()*Math.PI*2,d=Math.random()*250+80;p.style.cssText=`width:${sz}px;height:${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};left:${cx}px;top:${cy}px;`;p.style.setProperty('--dx',Math.cos(ang)*d+'px');p.style.setProperty('--dy',Math.sin(ang)*d+'px');ov.appendChild(p);}
+  const emojis=['⭐','🌟','✨','💫'];for(let i=0;i<(isCombo?14:8);i++){const s=document.createElement('div');s.className='star-burst';s.textContent=emojis[Math.floor(Math.random()*emojis.length)];const ang=Math.random()*Math.PI*2,d=Math.random()*200+100;s.style.left=cx+'px';s.style.top=cy+'px';s.style.setProperty('--dx',Math.cos(ang)*d+'px');s.style.setProperty('--dy',Math.sin(ang)*d+'px');s.style.animationDelay=(Math.random()*0.3)+'s';ov.appendChild(s);}
+  launchRocket();
+  for(let i=0;i<(isCombo?4:2);i++){setTimeout(()=>{const st=document.createElement('div');st.className='shooting-star';st.style.left=(Math.random()*innerWidth*0.3)+'px';st.style.top=(Math.random()*innerHeight*0.4)+'px';st.style.setProperty('--sx',(innerWidth*0.7+Math.random()*200)+'px');st.style.setProperty('--sy',(innerHeight*0.3+Math.random()*100)+'px');document.body.appendChild(st);setTimeout(()=>st.remove(),900);},i*200);}
+  if(isCombo){const b=document.createElement('div');b.className='combo-banner';b.textContent=LANG[currentLang].combo(comboNum);document.body.appendChild(b);setTimeout(()=>b.remove(),1600);}
+  setTimeout(()=>ov.remove(),1400);
+}
+function launchRocket(){const r=document.createElement('div');r.className='rocket-launch';r.textContent='🚀';r.style.left=(innerWidth/2-28)+'px';r.style.top=(innerHeight-40)+'px';document.body.appendChild(r);let ec=0;const ei=setInterval(()=>{if(ec>8){clearInterval(ei);return;}const ex=document.createElement('div');ex.className='exhaust';ex.style.left=(innerWidth/2-3+(Math.random()-0.5)*16)+'px';ex.style.top=(innerHeight-20-ec*30)+'px';ex.style.background=['#ff9100','#ffcc00','#ff6b6b'][Math.floor(Math.random()*3)];document.body.appendChild(ex);setTimeout(()=>ex.remove(),700);ec++;},80);setTimeout(()=>r.remove(),1300);}
+
+// teaching tip
+function generateTip(p){
+  if(p.twoStep){const L=LANG[currentLang];return L.tipTwoStep(p.a,p.op1,p.b,p.mid,p.op2,p.c,p.answer);}
+  const{a,b,isAdd,answer}=p;const L=LANG[currentLang];
+  if(isAdd){
+    if(Math.abs(a-b)===1){const sm=Math.min(a,b);return L.tipNearDoubles(a,b,sm,answer);}
+    if(a===b)return L.tipDoubles(a,b,answer);
+    if(answer>10&&a>2&&b>2){const bg=Math.max(a,b),sm=Math.min(a,b),tt=10-bg,l=sm-tt;return L.tipMake10(bg,tt,l,answer);}
+    if(a===10||b===10){const o=a===10?b:a;return L.tipAdd10(o,answer);}
+    {const bg=Math.max(a,b),sm=Math.min(a,b),st=[];for(let i=1;i<=sm;i++)st.push(bg+i);return L.tipCountUp(bg,sm,st.slice(0,6).join(', ')+(st.length>6?'...':''),answer);}
+  }else{
+    if(a===10)return L.tipTakeFrom10(b,answer);
+    if(a>10&&answer<10){const tt=a-10,r=b-tt;return L.tipGoThrough10(a,tt,r,answer);}
+    if(b>4&&answer>2){const st=[];for(let i=b+1;i<=a;i++)st.push(i);return L.tipFindGap(b,a,st.slice(0,7).join(', ')+(st.length>7?'...':''),answer);}
+    {const st=[];for(let i=1;i<=b;i++)st.push(a-i);return L.tipCountBack(a,b,st.slice(0,6).join(', ')+(st.length>6?'...':''),answer);}
+  }
+}
+
+// leaderboard rendering
+function renderLeaderboard(id,lb,myName){
+  const el=$(id);if(!el)return;
+  if(!lb||lb.length===0){el.innerHTML=`<div class="leaderboard-title">${t('leaderboardTitle')}</div><div class="leaderboard-empty">${t('noScores')}</div>`;return;}
+  const medals=['🥇','🥈','🥉'];let rows='';
+  for(let i=0;i<lb.length;i++){const e=lb[i],isYou=myName&&e.name.toLowerCase()===myName.toLowerCase();
+    rows+=`<tr>${i<3?`<td class="lb-rank lb-medal">${medals[i]}</td>`:`<td class="lb-rank">${i+1}</td>`}<td class="lb-name"${isYou?' style="color:var(--correct)"':''}>${escapeHTML(e.name)}${isYou?' '+t('you'):''}</td><td class="lb-stars">⭐ ${e.stars}</td></tr>`;}
+  el.innerHTML=`<div class="leaderboard-title">${t('leaderboardTitle')}</div><table class="leaderboard-table"><tbody>${rows}</tbody></table>`;
+}
+
+// ════════════════════════════════════════════
+//  DIFFICULTY SYSTEM
+// ════════════════════════════════════════════
+function getDifficulty(streak) {
+  if (streak >= 10) return 'expert';
+  if (streak >= 6) return 'hard';
+  if (streak >= 3) return 'medium';
+  return 'easy';
+}
+
+function getDiffLabel(diff) {
+  return t('diff' + diff.charAt(0).toUpperCase() + diff.slice(1));
+}
+
+function getDiffClass(diff) {
+  return 'diff-' + diff;
+}
+
+// ════════════════════════════════════════════
+//  GAME SETTINGS
+// ════════════════════════════════════════════
+const PRESETS = {
+  starter:   { ops: ['+'], minNum: 1, maxNum: 10 },
+  classic:   { ops: ['+', '−'], minNum: 1, maxNum: 20 },
+  challenge: { ops: ['+', '−'], minNum: 1, maxNum: 50 },
+  expert:    { ops: ['+', '−'], minNum: 1, maxNum: 100 },
+};
+let gameSettings = { ops: ['+', '−'], minNum: 1, maxNum: 20, preset: 'classic' };
+
+function loadGameSettings() {
+  try { const s = JSON.parse(localStorage.getItem('spaceMathSettings')); if (s) Object.assign(gameSettings, s); } catch {}
+}
+function saveGameSettings() {
+  localStorage.setItem('spaceMathSettings', JSON.stringify(gameSettings));
+}
+
+function applySettingsToUI(prefix) {
+  // ops buttons
+  $(prefix + '-ops-row').querySelectorAll('.ops-btn').forEach(b => {
+    b.classList.toggle('active', gameSettings.ops.includes(b.dataset.op));
+  });
+  // range inputs
+  $(prefix + '-range-min').value = gameSettings.minNum;
+  $(prefix + '-range-max').value = gameSettings.maxNum;
+  // preset highlight
+  $(prefix + '-presets-row').querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.preset === gameSettings.preset);
+  });
+}
+
+function matchPreset() {
+  for (const [name, p] of Object.entries(PRESETS)) {
+    if (p.minNum === gameSettings.minNum && p.maxNum === gameSettings.maxNum &&
+        p.ops.length === gameSettings.ops.length && p.ops.every(o => gameSettings.ops.includes(o))) {
+      return name;
+    }
+  }
+  return null;
+}
+
+function setupSettingsHandlers(prefix) {
+  // operation toggles
+  $(prefix + '-ops-row').addEventListener('click', e => {
+    const btn = e.target.closest('.ops-btn');
+    if (!btn) return;
+    SFX.tap();
+    const op = btn.dataset.op;
+    if (btn.classList.contains('active') && gameSettings.ops.length <= 1) return; // keep at least one
+    btn.classList.toggle('active');
+    gameSettings.ops = [];
+    $(prefix + '-ops-row').querySelectorAll('.ops-btn.active').forEach(b => gameSettings.ops.push(b.dataset.op));
+    gameSettings.preset = matchPreset();
+    $(prefix + '-presets-row').querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b.dataset.preset === gameSettings.preset));
+    saveGameSettings();
+  });
+  // range inputs
+  [prefix + '-range-min', prefix + '-range-max'].forEach(id => {
+    $(id).addEventListener('change', () => {
+      let mn = parseInt($(prefix + '-range-min').value, 10) || 1;
+      let mx = parseInt($(prefix + '-range-max').value, 10) || 20;
+      mn = Math.max(1, Math.min(99, mn));
+      mx = Math.max(mn + 1, Math.min(100, mx));
+      $(prefix + '-range-min').value = mn;
+      $(prefix + '-range-max').value = mx;
+      gameSettings.minNum = mn;
+      gameSettings.maxNum = mx;
+      gameSettings.preset = matchPreset();
+      $(prefix + '-presets-row').querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b.dataset.preset === gameSettings.preset));
+      saveGameSettings();
+    });
+  });
+  // presets
+  $(prefix + '-presets-row').addEventListener('click', e => {
+    const btn = e.target.closest('.preset-btn');
+    if (!btn) return;
+    SFX.tap();
+    const p = PRESETS[btn.dataset.preset];
+    if (!p) return;
+    gameSettings.ops = [...p.ops];
+    gameSettings.minNum = p.minNum;
+    gameSettings.maxNum = p.maxNum;
+    gameSettings.preset = btn.dataset.preset;
+    applySettingsToUI(prefix);
+    saveGameSettings();
+  });
+}
+
+loadGameSettings();
+
+function generateProblemByDifficulty(diff, settings) {
+  const ops = (settings && settings.ops) || gameSettings.ops;
+  const minNum = (settings && settings.minNum != null) ? settings.minNum : gameSettings.minNum;
+  const maxNum = (settings && settings.maxNum != null) ? settings.maxNum : gameSettings.maxNum;
+  const span = maxNum - minNum;
+
+  // Difficulty-scaled operand and result limits
+  let opMax, resMax;
+  if (diff === 'easy') {
+    opMax = minNum + Math.max(Math.ceil(span * 0.35), 1);
+    resMax = minNum + Math.max(Math.ceil(span * 0.5), 2);
+  } else if (diff === 'medium') {
+    opMax = minNum + Math.max(Math.ceil(span * 0.6), 2);
+    resMax = minNum + Math.max(Math.ceil(span * 0.75), 4);
+  } else {
+    opMax = maxNum;
+    resMax = maxNum;
+  }
+  opMax = Math.min(opMax, maxNum);
+  resMax = Math.min(resMax, maxNum);
+  const rand = (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo;
+
+  for (let tries = 0; tries < 200; tries++) {
+    // Expert two-step if range is big enough
+    if (diff === 'expert' && span >= 10) {
+      const op1 = ops[Math.floor(Math.random() * ops.length)];
+      const op2 = ops[Math.floor(Math.random() * ops.length)];
+      const a = rand(minNum, opMax);
+      const bMax = Math.max(minNum, minNum + Math.floor((opMax - minNum) * 0.7));
+      const b = rand(minNum, bMax);
+      const cMax = Math.max(minNum, minNum + Math.floor((opMax - minNum) * 0.5));
+      const c = rand(minNum, cMax);
+      const mid = op1 === '+' ? a + b : a - b;
+      if (mid < 0 || mid > maxNum) continue;
+      const answer = op2 === '+' ? mid + c : mid - c;
+      if (answer < 0 || answer > maxNum) continue;
+      return { a, b, c, op1, op2, twoStep: true, mid, answer, isAdd: op1 === '+' };
+    }
+
+    const op = ops[Math.floor(Math.random() * ops.length)];
+    const isAdd = op === '+';
+    let a = rand(minNum, opMax);
+    let b = rand(minNum, opMax);
+
+    if (isAdd) {
+      const result = a + b;
+      if (result > resMax || result < minNum) continue;
+      return { a, b, op: '+', isAdd: true, answer: result };
+    } else {
+      if (a < b) { const tmp = a; a = b; b = tmp; }
+      const result = a - b;
+      if (result < 0 || result > resMax) continue;
+      return { a, b, op: '−', isAdd: false, answer: result };
+    }
+  }
+  // fallback
+  if (ops.includes('+') && minNum + minNum <= maxNum) {
+    return { a: minNum, b: minNum, op: '+', isAdd: true, answer: minNum + minNum };
+  }
+  return { a: minNum + 1, b: minNum, op: '−', isAdd: false, answer: 1 };
+}
+
+function problemDisplayText(p) {
+  if (p.twoStep) return `${p.a} ${p.op1} ${p.b} ${p.op2} ${p.c} = `;
+  return `${p.a} ${p.op} ${p.b} = `;
+}
+
+function flashDiffChange(oldDiff, newDiff) {
+  if (oldDiff === newDiff) return;
+  let text, cls;
+  if (newDiff === 'easy' && oldDiff !== 'easy') {
+    text = t('diffDown'); cls = 'diff-flash-down';
+  } else if (newDiff === 'medium' && (oldDiff === 'easy')) {
+    text = t('diffUpMedium'); cls = 'diff-flash-up';
+  } else if (newDiff === 'hard' && (oldDiff === 'medium' || oldDiff === 'easy')) {
+    text = t('diffUpHard'); cls = 'diff-flash-up';
+  } else if (newDiff === 'expert') {
+    text = t('diffUpExpert'); cls = 'diff-flash-expert';
+  } else return;
+  const el = document.createElement('div');
+  el.className = 'difficulty-flash ' + cls;
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2200);
+}
+
+// timer animation (shared)
+let timerAnimFrame=null;
+function startTimerAnim(fillId,seconds,onDone){
+  stopTimerAnim();
+  const start=performance.now(),dur=seconds*1000,fill=$(fillId);
+  fill.classList.remove('urgent');let ticked=false;
+  function tick(){const e=performance.now()-start,pct=Math.max(0,1-e/dur);fill.style.width=(pct*100)+'%';
+    if(pct<0.25&&!fill.classList.contains('urgent'))fill.classList.add('urgent');
+    if(pct<=0.3&&!ticked&&pct>0){ticked=true;SFX.tick();}
+    if(pct>0)timerAnimFrame=requestAnimationFrame(tick);else if(onDone)onDone();}
+  timerAnimFrame=requestAnimationFrame(tick);
+}
+function stopTimerAnim(){if(timerAnimFrame)cancelAnimationFrame(timerAnimFrame);timerAnimFrame=null;}
+
+// ════════════════════════════════════════════
+//  SINGLE PLAYER LOCAL LEADERBOARD
+// ════════════════════════════════════════════
+function getSPLeaderboard(){try{return JSON.parse(localStorage.getItem('spaceMathLB'))||[];}catch{return[];}}
+function saveSPLeaderboard(lb){localStorage.setItem('spaceMathLB',JSON.stringify(lb.slice(0,10)));}
+function updateSPLeaderboard(name,stars){
+  const lb=getSPLeaderboard();
+  const e=lb.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(e){e.stars+=stars;e.rounds++;e.name=name;}else lb.push({name,stars,rounds:1,pw:sp.password});
+  lb.sort((a,b)=>b.stars-a.stars);saveSPLeaderboard(lb);return lb;
+}
+function authenticatePlayer(name,password){
+  if(!name)return{ok:false,msg:t('enterName')};
+  if(!password)return{ok:false,msg:t('enterPassword')};
+  const lb=getSPLeaderboard();
+  const e=lb.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(e){
+    // Existing player — password must match
+    if(e.pw!==password)return{ok:false,msg:t('wrongPassword')};
+    return{ok:true,entry:e};
+  }
+  // New player — register immediately with password
+  lb.push({name,stars:0,rounds:0,pw:password});
+  saveSPLeaderboard(lb);
+  return{ok:true,entry:null};
+}
+
+// ════════════════════════════════════════════
+//  SINGLE PLAYER MODE
+// ════════════════════════════════════════════
+const ROUND_SIZE=10;
+let sp={name:'Astronaut',password:'',currentProblem:null,current:0,stars:0,totalStars:0,combo:0,prevDiff:'easy',answered:false,input:'',timerEnabled:false,timerSec:10,timerHandle:null};
+
+function spSetup(){
+  $('sp-login-error').textContent='';
+  $('sp-password').value='';
+  $('sp-stats').style.display='none';
+  $('sp-subtitle').textContent=t('whatsYourName');
+  const saved=localStorage.getItem('spaceMathName');
+  if(saved){$('sp-name').value=saved;sp.name=saved;
+    const lb=getSPLeaderboard(),e=lb.find(x=>x.name.toLowerCase()===saved.toLowerCase());
+    if(e){$('sp-subtitle').textContent=LANG[currentLang].welcomeBack(saved);$('sp-stats').style.display='';$('sp-stats').textContent=LANG[currentLang].starsRounds(e.stars,e.rounds);}
+  }
+  applySettingsToUI('sp');
+  showScreen('sp-setup');
+}
+
+function spStartRound(){
+  const name=$('sp-name').value.trim();
+  const password=$('sp-password').value;
+  const auth=authenticatePlayer(name,password);
+  if(!auth.ok){$('sp-login-error').textContent=auth.msg;return;}
+  $('sp-login-error').textContent='';
+  sp.name=name;sp.password=password;
+  localStorage.setItem('spaceMathName',sp.name);
+  sp.current=0;sp.stars=0;sp.combo=0;sp.prevDiff='easy';
+  SFX.start();showScreen('sp-game');spLoadProblem();
+}
+
+function spLoadProblem(){
+  if(sp.current>=ROUND_SIZE){spShowSummary();return;}
+  const diff=getDifficulty(sp.combo);
+  flashDiffChange(sp.prevDiff,diff);
+  sp.prevDiff=diff;
+  const p=generateProblemByDifficulty(diff);
+  sp.currentProblem=p;
+  sp.answered=false;sp.input='';
+  $('sp-problem-text').textContent=problemDisplayText(p)+'?';
+  spUpdateAnswer();
+  $('sp-feedback').innerHTML='&nbsp;';$('sp-feedback').className='feedback';
+  $('sp-keyboard-hint').style.display='';
+  $('sp-round-label').textContent=`${sp.current+1} / ${ROUND_SIZE}`;
+  $('sp-player-name').textContent=`👨‍🚀 ${sp.name}`;
+  $('sp-progress-fill').style.width=(sp.current/ROUND_SIZE*100)+'%';
+  $('sp-star-count').textContent=sp.stars;
+  $('sp-streak').textContent=sp.combo>0?`🔥x${sp.combo}`:'';
+  const dl=$('sp-diff-label');dl.textContent=getDiffLabel(diff);dl.className='sp-diff-label '+getDiffClass(diff);
+  spHideBriefing();
+
+  if(sp.timerEnabled){
+    $('sp-timer-bar').style.display='';
+    clearTimeout(sp.timerHandle);
+    startTimerAnim('sp-timer-fill',sp.timerSec,()=>{
+      if(sp.answered)return;
+      sp.answered=true;sp.combo=0;SFX.reveal();
+      spShowBriefing(p);
+      sp.timerHandle=setTimeout(()=>{sp.current++;spLoadProblem();},4000);
+    });
+  }else{$('sp-timer-bar').style.display='none';stopTimerAnim();}
+}
+
+function spUpdateAnswer(){
+  const el=$('sp-answer-display');
+  el.innerHTML=sp.input===''?'<span class="cursor"></span>':escapeHTML(sp.input);
+}
+
+function spSubmit(){
+  if(sp.answered||sp.input==='')return;
+  SFX.submit();
+  const p=sp.currentProblem,num=parseInt(sp.input,10);
+  if(num===p.answer){
+    sp.answered=true;sp.stars++;sp.combo++;
+    clearTimeout(sp.timerHandle);stopTimerAnim();
+    $('sp-star-count').textContent=sp.stars;
+    $('sp-feedback').textContent=LANG[currentLang].correctFeedback(sp.name);
+    $('sp-feedback').className='feedback correct';
+    $('sp-keyboard-hint').style.display='none';
+    const isCombo=sp.combo>=3;if(isCombo)SFX.combo();else SFX.correct();
+    celebrateCorrect(isCombo,sp.combo);
+    setTimeout(()=>{sp.current++;spLoadProblem();},2000);
+  }else{
+    sp.answered=true;sp.combo=0;
+    clearTimeout(sp.timerHandle);stopTimerAnim();
+    SFX.wrong();
+    spShowBriefing(p);
+  }
+}
+
+function spShowBriefing(p){
+  const tip=generateTip(p);
+  $('sp-briefing-answer').textContent=problemDisplayText(p)+p.answer;
+  $('sp-briefing-tip').innerHTML=`<div style="margin-bottom:8px;color:rgba(255,255,255,0.7)">${LANG[currentLang].briefingIntro()}</div>${tip}`;
+  $('sp-briefing').classList.add('visible');
+  $('sp-problem-box').style.display='none';$('sp-feedback').style.display='none';$('sp-keyboard-hint').style.display='none';
+}
+function spHideBriefing(){$('sp-briefing').classList.remove('visible');$('sp-problem-box').style.display='';$('sp-feedback').style.display='';}
+
+$('sp-got-it').addEventListener('click',()=>{SFX.tap();spHideBriefing();sp.current++;spLoadProblem();});
+
+function spShowSummary(){
+  SFX.fanfare();stopTimerAnim();
+  const lb=updateSPLeaderboard(sp.name,sp.stars);
+  const L=LANG[currentLang];
+  $('sp-end-title').textContent=sp.stars>=8?L.summaryIncredible(sp.name):sp.stars>=5?L.summaryGreat(sp.name):L.summaryGood(sp.name);
+  $('sp-end-stars').textContent='⭐'.repeat(sp.stars)||'—';
+  let msg=L.earnedStars(sp.stars,ROUND_SIZE);if(sp.stars===ROUND_SIZE)msg+=L.perfectRound;
+  $('sp-end-msg').textContent=msg;
+  const entry=lb.find(x=>x.name.toLowerCase()===sp.name.toLowerCase());
+  $('sp-end-total').textContent=entry?L.totalStars(entry.stars):'';
+  renderLeaderboard('leaderboard-sp-end',lb,sp.name);
+  showScreen('sp-end');
+}
+
+// SP controls
+$('sp-timer-toggle').addEventListener('click',()=>{sp.timerEnabled=!sp.timerEnabled;$('sp-timer-toggle').classList.toggle('on',sp.timerEnabled);$('sp-timer-choices').style.display=sp.timerEnabled?'flex':'none';});
+$('sp-timer-choices').addEventListener('click',e=>{const b=e.target.closest('[data-sec]');if(!b)return;sp.timerSec=parseInt(b.dataset.sec,10);$('sp-timer-choices').querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
+$('sp-start').addEventListener('click',spStartRound);
+$('sp-again').addEventListener('click',spStartRound);
+$('sp-name').addEventListener('keydown',e=>{if(e.key==='Enter')$('sp-password').focus();});
+$('sp-password').addEventListener('keydown',e=>{if(e.key==='Enter'){e.target.blur();spStartRound();}});
+$('sp-back').addEventListener('click',()=>showScreen('mode'));
+$('sp-home').addEventListener('click',()=>{showScreen('mode');initHome();});
+setupSettingsHandlers('sp');
+
+// ════════════════════════════════════════════
+//  MULTIPLAYER MODE
+// ════════════════════════════════════════════
+let ws=null,mySlot=null,myName='',mpInput='',mpAnswered=false,mpCombo=0,mpPrevDiff='easy';
+let mpTimerEnabled=false,mpTimerSec=10,mpHostIp='',mpHostPort='',mpMaxNum=20;
+
+function mpConnect(){
+  showScreen('connecting');$('connecting-msg').textContent=t('connectingToServer');
+  const proto=location.protocol==='https:'?'wss':'ws';
+  ws=new WebSocket(`${proto}://${location.host}`);
+  ws.onmessage=e=>mpHandle(JSON.parse(e.data));
+  ws.onclose=()=>{if($('screen-connecting').classList.contains('active')||$('screen-lobby').classList.contains('active')||$('screen-mp-game').classList.contains('active')||$('screen-mp-end').classList.contains('active')){$('connecting-msg').textContent=t('disconnectedReconnecting');showScreen('connecting');setTimeout(mpConnect,2000);}};
+  ws.onerror=()=>{$('connecting-msg').textContent=t('cannotConnect');};
+}
+function mpSend(msg){if(ws&&ws.readyState===1)ws.send(JSON.stringify(msg));}
+function mpDisconnect(){if(ws){ws.onclose=null;ws.close();ws=null;}showScreen('mode');initHome();}
+
+function mpHandle(msg){
+  switch(msg.type){
+    case 'welcome':
+      mySlot=msg.slot;myName=msg.defaultName;$('mp-name-input').value=myName;
+      if(mySlot==='1'){mpHostIp=msg.ip;mpHostPort=msg.port;$('host-box').style.display='';$('host-box').innerHTML=LANG[currentLang].youAreHost(msg.ip,msg.port);$('btn-mp-start').style.display='';$('lobby-wait').style.display='none';$('timer-note').textContent='';}
+      else{$('host-box').style.display='none';$('btn-mp-start').style.display='none';$('lobby-wait').style.display='';$('timer-note').textContent=t('onlyHostConfigure');}
+      mpUpdateBadge(msg.slot,msg.defaultName,true);
+      renderLeaderboard('leaderboard-lobby',msg.leaderboard||[],myName);
+      applySettingsToUI('mp');
+      showScreen('lobby');break;
+    case 'full':$('connecting-msg').textContent=t('gameFull');break;
+    case 'player-joined':mpUpdateBadge(msg.slot,msg.name,true);break;
+    case 'player-update':for(const[s,i]of Object.entries(msg.players))mpUpdateBadge(s,i.name,true);break;
+    case 'player-left':for(const s of['1','2'])if(s!==mySlot)mpUpdateBadge(s,LANG[currentLang].player(s),false);
+      if(mpGameActive()){showScreen('lobby');$('lobby-subtitle').textContent=LANG[currentLang].disconnected(msg.name);}break;
+    case 'game-start':SFX.start();mpCombo=0;mpAnswered=false;mpPrevDiff='easy';mpMaxNum=msg.maxNum||20;showScreen('mp-game');break;
+    case 'problem':
+      mpAnswered=false;mpInput='';mpUpdateAnswer();mpHideBriefing();
+      if(msg.twoStep)$('mp-problem-text').textContent=`${msg.a} ${msg.op1} ${msg.b} ${msg.op2} ${msg.c} = ?`;
+      else $('mp-problem-text').textContent=`${msg.a} ${msg.op} ${msg.b} = ?`;
+      $('mp-feedback').innerHTML='&nbsp;';$('mp-feedback').className='feedback';$('mp-keyboard-hint').style.display='';
+      $('mp-progress-fill').style.width=(msg.index/msg.total*100)+'%';
+      mpRenderScoreboard(msg.scores,msg.streaks);
+      if(msg.timerEnabled){$('mp-timer-bar').style.display='';startTimerAnim('mp-timer-fill',msg.timerSeconds);}
+      else{$('mp-timer-bar').style.display='none';stopTimerAnim();}break;
+    case 'correct':{stopTimerAnim();const isMe=msg.slot===mySlot;
+      const oldDiff=getDifficulty(mpCombo);
+      if(isMe){mpCombo++;const ic=mpCombo>=3;if(ic)SFX.combo();else SFX.correct();celebrateCorrect(ic,mpCombo);$('mp-feedback').textContent=LANG[currentLang].mpCorrectFeedback();$('mp-feedback').className='feedback correct';flashDiffChange(oldDiff,getDifficulty(mpCombo));}
+      else{const od2=getDifficulty(mpCombo);mpCombo=0;flashDiffChange(od2,getDifficulty(0));$('mp-feedback').textContent=LANG[currentLang].gotItFirst(msg.name,msg.answer);$('mp-feedback').className='feedback wrong';SFX.reveal();}
+      $('mp-keyboard-hint').style.display='none';mpRenderScoreboard(msg.scores,msg.streaks);break;}
+    case 'wrong':if(msg.slot===mySlot){SFX.wrong();const od=getDifficulty(mpCombo);mpCombo=0;flashDiffChange(od,getDifficulty(0));mpAnswered=true;$('mp-feedback').textContent=t('notQuiteWaiting');$('mp-feedback').className='feedback wrong';$('mp-keyboard-hint').style.display='none';}break;
+    case 'steal-chance':$('mp-feedback').textContent=LANG[currentLang].stealChance(msg.name);$('mp-feedback').className='feedback correct';break;
+    case 'both-wrong':case 'timeout':
+      stopTimerAnim();mpAnswered=true;const od3=getDifficulty(mpCombo);mpCombo=0;flashDiffChange(od3,getDifficulty(0));SFX.reveal();
+      mpShowBriefing(msg.problem,msg.answer);$('mp-keyboard-hint').style.display='none';mpRenderScoreboard(msg.scores,msg.streaks);break;
+    case 'round-end':{
+      SFX.fanfare();const scores=msg.scores;let title,emoji;
+      if(msg.winnerSlot){const isMe=msg.winnerSlot===mySlot;title=isMe?t('youWin'):LANG[currentLang].theyWin(msg.winnerName);emoji=isMe?'🏆🎉🚀':'🪐⭐';if(isMe)celebrateCorrect(true,5);}
+      else{title=t('itsTie');emoji='🤝⭐';}
+      $('mp-end-emoji').textContent=emoji;$('mp-end-title').textContent=title;$('mp-end-winner').textContent=msg.winnerName?`🏆 ${msg.winnerName}`:'';
+      let sh='';for(const[s,i]of Object.entries(scores))sh+=`<span${s===msg.winnerSlot?' style="color:var(--accent)"':''}>${escapeHTML(i.name)} ⭐${i.score}</span>`;
+      $('mp-end-scores').innerHTML=sh;
+      if(mySlot==='1'){$('btn-mp-again').style.display='';$('mp-end-wait').style.display='none';}else{$('btn-mp-again').style.display='none';$('mp-end-wait').style.display='';}
+      renderLeaderboard('leaderboard-mp-end',msg.leaderboard||[],myName);showScreen('mp-end');break;}
+  }
+}
+
+function mpGameActive(){return $('screen-mp-game').classList.contains('active');}
+function mpUpdateBadge(s,n,c){$('badge-name-'+s).textContent=n;$('badge-status-'+s).textContent=c?t('ready'):t('waiting');const b=$('badge-'+s);if(c)b.classList.add('connected');else b.classList.remove('connected');}
+function mpRenderScoreboard(scores,streaks){if(!scores)return;const slots=Object.keys(scores).sort();let h='';for(let i=0;i<slots.length;i++){const s=slots[i],info=scores[s],isMe=s===mySlot;const streak=streaks?streaks[s]||0:0;const diff=getDifficulty(streak);if(i>0)h+='<div class="sb-vs">'+t('vs')+'</div>';h+=`<div class="sb-player${isMe?' me':''}"><div class="sb-name">${escapeHTML(info.name)}${isMe?' '+t('you'):''}</div><div class="sb-score">⭐ ${info.score}${streak>0?' <span class="sb-streak">🔥x'+streak+'</span>':''}</div><div class="sb-diff">${getDiffLabel(diff)}</div></div>`;}$('mp-scoreboard').innerHTML=h;}
+function mpUpdateAnswer(){const el=$('mp-answer-display');el.innerHTML=mpInput===''?'<span class="cursor"></span>':escapeHTML(mpInput);}
+function mpSubmit(){if(mpAnswered||mpInput==='')return;SFX.submit();mpAnswered=true;mpSend({type:'answer',value:mpInput});}
+function mpShowBriefing(prob,ans){const tip=generateTip(prob);$('mp-briefing-answer').textContent=problemDisplayText(prob)+ans;$('mp-briefing-tip').innerHTML=`<div style="margin-bottom:8px;color:rgba(255,255,255,0.7)">${LANG[currentLang].mpBriefingIntro()}</div>${tip}`;$('mp-briefing').classList.add('visible');$('mp-problem-box').style.display='none';$('mp-feedback').style.display='none';}
+function mpHideBriefing(){$('mp-briefing').classList.remove('visible');$('mp-problem-box').style.display='';$('mp-feedback').style.display='';}
+
+// MP controls
+$('mp-name-input').addEventListener('input',()=>{myName=$('mp-name-input').value.trim()||t('playerDefault');mpSend({type:'set-name',name:myName});});
+$('mp-name-input').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
+$('mp-timer-toggle').addEventListener('click',()=>{mpTimerEnabled=!mpTimerEnabled;$('mp-timer-toggle').classList.toggle('on',mpTimerEnabled);$('mp-timer-choices').style.display=mpTimerEnabled?'flex':'none';});
+$('mp-timer-choices').addEventListener('click',e=>{const b=e.target.closest('[data-sec]');if(!b)return;mpTimerSec=parseInt(b.dataset.sec,10);$('mp-timer-choices').querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
+$('btn-mp-start').addEventListener('click',()=>mpSend({type:'start-game',timerEnabled:mpTimerEnabled,timerSeconds:mpTimerSec,settings:{ops:gameSettings.ops,minNum:gameSettings.minNum,maxNum:gameSettings.maxNum}}));
+$('btn-mp-again').addEventListener('click',()=>mpSend({type:'start-game',timerEnabled:mpTimerEnabled,timerSeconds:mpTimerSec,settings:{ops:gameSettings.ops,minNum:gameSettings.minNum,maxNum:gameSettings.maxNum}}));
+$('mp-back').addEventListener('click',mpDisconnect);
+$('mp-end-home').addEventListener('click',mpDisconnect);
+setupSettingsHandlers('mp');
+
+// ════════════════════════════════════════════
+//  KEYBOARD INPUT (routes to active mode)
+// ════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  // skip if typing in any input
+  if(document.activeElement&&document.activeElement.tagName==='INPUT')return;
+
+  // single player game
+  if($('screen-sp-game').classList.contains('active')){
+    if($('sp-briefing').classList.contains('visible')){
+      if(e.key==='Enter'){SFX.tap();spHideBriefing();sp.current++;spLoadProblem();}return;
+    }
+    if(e.key>='0'&&e.key<='9'){SFX.tap();if(sp.answered)return;const p=sp.input+e.key,n=parseInt(p,10);if(n>gameSettings.maxNum||p.length>3)return;sp.input=String(n);spUpdateAnswer();}
+    else if(e.key==='Backspace'){SFX.clear();if(sp.answered)return;sp.input='';spUpdateAnswer();}
+    else if(e.key==='Enter')spSubmit();
+    return;
+  }
+
+  // multiplayer game
+  if($('screen-mp-game').classList.contains('active')){
+    if(e.key>='0'&&e.key<='9'){SFX.tap();if(mpAnswered)return;const p=mpInput+e.key,n=parseInt(p,10);if(n>mpMaxNum||p.length>3)return;mpInput=String(n);mpUpdateAnswer();}
+    else if(e.key==='Backspace'){SFX.clear();if(mpAnswered)return;mpInput='';mpUpdateAnswer();}
+    else if(e.key==='Enter')mpSubmit();
+  }
+});
+
+// ════════════════════════════════════════════
+//  MODE SELECT & HOME
+// ════════════════════════════════════════════
+function initHome(){
+  const lb=getSPLeaderboard();
+  renderLeaderboard('leaderboard-home',lb,localStorage.getItem('spaceMathName')||'');
+}
+
+$('mode-single').addEventListener('click',()=>{SFX.tap();spSetup();});
+$('mode-multi').addEventListener('click',()=>{SFX.tap();mpConnect();});
+
+initHome();
+setLang(currentLang);
+</script>
+</body>
+</html>
