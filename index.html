@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Space Math</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
@@ -12,17 +12,17 @@
   --accent: #ffcc00; --correct: #4cff8e; --wrong: #ff6b6b;
   --text: #fff; --btn-bg: #1e2266; --btn-hover: #2d35a0;
 }
-html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-dark); color:var(--text); overflow:hidden; user-select:none; -webkit-user-select:none; }
+html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-dark); color:var(--text); overflow:hidden; user-select:none; -webkit-user-select:none; -webkit-text-size-adjust:100%; }
 #stars-canvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
-#app { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; height:100%; padding:16px; overflow-y:auto; }
+#app { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; height:100%; padding:16px; padding-top:max(16px, env(safe-area-inset-top)); padding-bottom:max(16px, env(safe-area-inset-bottom)); padding-left:max(16px, env(safe-area-inset-left)); padding-right:max(16px, env(safe-area-inset-right)); overflow-y:auto; -webkit-overflow-scrolling:touch; }
 
 /* screens */
 .screen { display:none; flex-direction:column; align-items:center; justify-content:center; flex:1; width:100%; max-width:650px; text-align:center; gap:14px; }
 .screen.active { display:flex; }
 /* content-heavy screens: top-align so they scroll naturally */
-#screen-sp-setup, #screen-lobby { justify-content:flex-start; padding-top:12px; gap:10px; }
+#screen-sp-setup { justify-content:flex-start; padding-top:12px; gap:10px; }
 /* game screens: tighter layout */
-#screen-sp-game, #screen-mp-game { justify-content:flex-start; padding-top:6px; gap:6px; }
+#screen-sp-game { justify-content:flex-start; padding-top:6px; gap:6px; }
 
 /* typo */
 .title { font-family:'Fredoka One',cursive; font-size:2.4rem; line-height:1.2; }
@@ -30,8 +30,8 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
 .hero-emoji { font-size:4.5rem; margin:4px 0; }
 .small-note { font-size:0.85rem; opacity:0.5; margin-top:-4px; }
 /* compact hero on setup screens */
-#screen-sp-setup .hero-emoji, #screen-lobby .hero-emoji { font-size:2.8rem; margin:0; }
-#screen-sp-setup .title, #screen-lobby .title { font-size:1.8rem; }
+#screen-sp-setup .hero-emoji { font-size:2.8rem; margin:0; }
+#screen-sp-setup .title { font-size:1.8rem; }
 
 /* inputs */
 .text-input { font-family:'Fredoka One',cursive; font-size:1.4rem; text-align:center; padding:12px 18px; border:3px solid rgba(108,99,255,0.5); border-radius:14px; background:rgba(255,255,255,0.08); color:var(--accent); outline:none; width:100%; max-width:280px; transition:border-color 0.2s; }
@@ -43,23 +43,6 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
 .btn:active { transform:scale(0.95); }
 .btn:disabled { opacity:0.4; cursor:default; transform:none; }
 .btn-green { background:linear-gradient(135deg,#1b8a2a,#4cff8e); }
-
-/* mode selector */
-.mode-buttons { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
-.mode-card { flex:1; min-width:200px; max-width:260px; background:var(--bg-card); border:3px solid rgba(255,255,255,0.1); border-radius:20px; padding:24px 16px; cursor:pointer; transition:border-color 0.2s, transform 0.15s; }
-.mode-card:hover { border-color:rgba(108,99,255,0.6); }
-.mode-card:active { transform:scale(0.97); }
-.mode-icon { font-size:3rem; margin-bottom:8px; }
-.mode-title { font-family:'Fredoka One',cursive; font-size:1.3rem; margin-bottom:4px; }
-.mode-desc { font-size:0.9rem; opacity:0.6; }
-
-/* scoreboard */
-.scoreboard { width:100%; max-width:650px; display:flex; justify-content:center; align-items:center; gap:16px; padding:8px 0; flex-shrink:0; }
-.sb-player { flex:1; text-align:center; background:var(--bg-card); border-radius:14px; padding:8px 12px; border:2px solid transparent; transition:border-color 0.3s; }
-.sb-player.me { border-color:rgba(108,99,255,0.5); }
-.sb-name { font-size:0.95rem; opacity:0.7; }
-.sb-score { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--accent); }
-.sb-vs { font-family:'Fredoka One',cursive; font-size:1.1rem; opacity:0.4; }
 
 /* single-player header */
 .sp-header { width:100%; max-width:650px; display:flex; justify-content:space-between; align-items:center; padding:6px 4px; flex-shrink:0; }
@@ -98,18 +81,6 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
 .briefing-tip strong { color:var(--accent); }
 .btn-got-it { display:block; margin:14px auto 0; font-family:'Fredoka One',cursive; font-size:1.1rem; padding:10px 30px; border:none; border-radius:50px; cursor:pointer; background:linear-gradient(135deg,#6c63ff,#e040fb); color:#fff; transition:transform 0.15s; }
 .btn-got-it:active { transform:scale(0.95); }
-
-/* lobby */
-.setup-row { display:flex; align-items:center; gap:10px; width:100%; max-width:380px; justify-content:center; }
-.setup-label { font-family:'Fredoka One',cursive; font-size:1rem; opacity:0.7; min-width:60px; text-align:right; }
-.host-box { background:rgba(108,99,255,0.15); border:2px solid rgba(108,99,255,0.4); border-radius:14px; padding:14px 18px; width:100%; max-width:440px; font-size:0.95rem; line-height:1.5; }
-.host-box code { font-family:'Fredoka One',cursive; font-size:1.1rem; color:var(--accent); background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px; }
-.player-status { display:flex; gap:16px; width:100%; max-width:400px; justify-content:center; }
-.player-badge { flex:1; background:var(--bg-card); border:2px solid rgba(255,255,255,0.1); border-radius:14px; padding:12px 8px; text-align:center; transition:border-color 0.3s; }
-.player-badge.connected { border-color:var(--correct); }
-.player-badge .badge-icon { font-size:2rem; margin-bottom:4px; }
-.player-badge .badge-name { font-family:'Fredoka One',cursive; font-size:1rem; }
-.player-badge .badge-status { font-size:0.8rem; opacity:0.5; }
 
 /* timer toggle */
 .timer-option { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
@@ -178,6 +149,15 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
 .preset-btn { font-family:'Fredoka One',cursive; font-size:0.78rem; padding:5px 11px; border:2px solid rgba(255,255,255,0.15); border-radius:10px; background:transparent; color:var(--text); cursor:pointer; transition:all 0.15s; }
 .preset-btn.active { border-color:var(--accent); background:rgba(255,204,0,0.15); color:var(--accent); }
 
+/* on-screen numeric keypad (touch devices only) */
+.keypad { display:none; width:100%; max-width:360px; margin-top:4px; grid-template-columns:repeat(3, 1fr); gap:8px; flex-shrink:0; }
+body.touch .keypad { display:grid; }
+body.touch .keyboard-hint { display:none; }
+.keypad-btn { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--text); background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.12); border-radius:14px; padding:14px 0; cursor:pointer; transition:transform 0.08s, background 0.15s; -webkit-tap-highlight-color:transparent; touch-action:manipulation; min-height:54px; }
+.keypad-btn:active { transform:scale(0.94); background:rgba(108,99,255,0.25); }
+.keypad-btn.kp-clear { background:rgba(255,107,107,0.15); border-color:rgba(255,107,107,0.35); color:var(--wrong); font-size:1.3rem; }
+.keypad-btn.kp-enter { background:rgba(76,255,142,0.18); border-color:rgba(76,255,142,0.4); color:var(--correct); font-size:1.3rem; }
+
 /* celebrations */
 .celebration-overlay { position:fixed; top:0; left:0; width:100%; height:100%; z-index:100; pointer-events:none; overflow:hidden; }
 .particle { position:absolute; border-radius:50%; animation:pop 1s ease-out forwards; }
@@ -194,33 +174,77 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
 @keyframes comboPop { 0%{transform:translate(-50%,-50%) scale(0);opacity:0;} 20%{transform:translate(-50%,-50%) scale(1.3);opacity:1;} 40%,80%{transform:translate(-50%,-50%) scale(1);opacity:1;} 100%{transform:translate(-50%,-60%) scale(0.8);opacity:0;} }
 
 @media (max-width:480px) {
+  #app { padding:12px; padding-top:max(12px, env(safe-area-inset-top)); padding-bottom:max(12px, env(safe-area-inset-bottom)); }
   .title { font-size:1.7rem; }
   .problem-text { font-size:2.4rem; }
   .answer-display { font-size:2.6rem; height:44px; }
+  .answer-display .cursor { height:32px; }
   .hero-emoji { font-size:3.2rem; }
-  #screen-sp-setup .hero-emoji, #screen-lobby .hero-emoji { font-size:2.2rem; }
-  #screen-sp-setup .title, #screen-lobby .title { font-size:1.5rem; }
+  #screen-sp-setup .hero-emoji { font-size:2.2rem; }
+  #screen-sp-setup .title { font-size:1.5rem; }
   .combo-banner { font-size:1.4rem; padding:8px 22px; top:25%; }
   .difficulty-flash { font-size:1.1rem; padding:8px 20px; }
-  .sb-score { font-size:1.3rem; }
-  .host-box { font-size:0.85rem; }
-  .mode-card { min-width:150px; padding:18px 12px; }
   .sp-star-counter { font-size:1.3rem; }
   .sp-streak { font-size:0.85rem; }
   .sp-round-label { font-size:0.85rem; }
-  .problem-box { padding:20px 16px; border-radius:20px; }
-  .feedback { min-height:36px; font-size:1.05rem; }
+  .problem-box { padding:16px 14px; border-radius:18px; }
+  .feedback { min-height:32px; font-size:1rem; }
   .keyboard-hint { font-size:0.8rem; }
   .game-settings { padding:10px 12px; }
   .settings-title { font-size:0.85rem; margin-bottom:8px; }
   .settings-group { margin-bottom:8px; }
-  .ops-btn { font-size:0.85rem; padding:6px 12px; }
-  .range-input { width:52px; font-size:0.9rem; }
-  .preset-btn { font-size:0.72rem; padding:4px 9px; }
-  .text-input { font-size:1.2rem; padding:10px 14px; }
-  .btn { font-size:1.15rem; padding:12px 32px; }
-  #screen-sp-setup, #screen-lobby { gap:8px; }
-  #screen-sp-game, #screen-mp-game { gap:4px; }
+  .ops-btn { font-size:0.85rem; padding:8px 12px; min-height:38px; }
+  .range-input { width:56px; font-size:1rem; padding:7px 4px; }
+  .preset-btn { font-size:0.78rem; padding:7px 11px; min-height:34px; }
+  .text-input { font-size:1.15rem; padding:11px 14px; }
+  .btn { font-size:1.1rem; padding:13px 28px; }
+  .toggle { width:48px; height:26px; }
+  .toggle::after { width:20px; height:20px; }
+  .toggle.on::after { transform:translateX(22px); }
+  .timer-choices button { padding:7px 13px; min-height:34px; }
+  .lang-switcher { top:10px; right:10px; gap:6px; }
+  .lang-btn { font-size:0.78rem; padding:5px 10px; }
+  .briefing-tip { font-size:0.98rem; }
+  .mission-briefing { padding:16px 14px; }
+  #screen-sp-setup { gap:8px; }
+  #screen-sp-game { gap:4px; }
+  .keypad { max-width:320px; gap:6px; }
+  .keypad-btn { font-size:1.4rem; padding:12px 0; min-height:48px; }
+  .keypad-btn.kp-clear, .keypad-btn.kp-enter { font-size:1.15rem; }
+}
+
+/* very small phones */
+@media (max-width:360px) {
+  .title { font-size:1.5rem; }
+  .problem-text { font-size:2rem; letter-spacing:1px; }
+  .answer-display { font-size:2.3rem; height:40px; }
+  .answer-display .cursor { height:28px; }
+  .problem-box { padding:14px 10px; }
+  .hero-emoji { font-size:2.6rem; }
+  .btn { font-size:1rem; padding:12px 24px; }
+  .keypad-btn { font-size:1.3rem; padding:10px 0; min-height:44px; }
+}
+
+/* landscape on short screens — compact vertical layout */
+@media (orientation:landscape) and (max-height:500px) {
+  #app { padding:8px; padding-top:max(8px, env(safe-area-inset-top)); padding-bottom:max(8px, env(safe-area-inset-bottom)); }
+  .screen { gap:6px; }
+  #screen-sp-game { gap:4px; padding-top:2px; }
+  .hero-emoji { font-size:2rem; margin:0; }
+  #screen-sp-setup .hero-emoji { font-size:1.6rem; }
+  .title { font-size:1.4rem; }
+  #screen-sp-setup .title { font-size:1.2rem; }
+  .subtitle { font-size:0.9rem; }
+  .problem-box { padding:10px 14px; }
+  .problem-text { font-size:1.8rem; }
+  .answer-display { font-size:2rem; height:34px; margin-top:0; }
+  .answer-display .cursor { height:24px; }
+  .feedback { min-height:24px; font-size:0.9rem; }
+  .keypad { max-width:280px; gap:5px; }
+  .keypad-btn { font-size:1.1rem; padding:6px 0; min-height:36px; }
+  .keypad-btn.kp-clear, .keypad-btn.kp-enter { font-size:1rem; }
+  .sp-header { padding:2px 4px; }
+  .game-settings { padding:8px 10px; }
 }
 </style>
 </head>
@@ -233,35 +257,13 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
     <button class="lang-btn" data-lang="sr">СР</button>
   </div>
 
-  <!-- ══ MODE SELECT ══ -->
-  <div class="screen active" id="screen-mode">
+  <!-- ══ SETUP ══ -->
+  <div class="screen active" id="screen-sp-setup">
     <div class="hero-emoji">🚀🪐⭐</div>
     <div class="title">Space Math</div>
-    <div class="subtitle">Choose your mission!</div>
-    <div class="mode-buttons">
-      <div class="mode-card" id="mode-single">
-        <div class="mode-icon">👨‍🚀</div>
-        <div class="mode-title">Solo Mission</div>
-        <div class="mode-desc">Practice on your own</div>
-      </div>
-      <div class="mode-card" id="mode-multi">
-        <div class="mode-icon">👨‍🚀🧑‍🚀</div>
-        <div class="mode-title">Space Race</div>
-        <div class="mode-desc">Two players over network</div>
-      </div>
-    </div>
-    <div class="leaderboard" id="leaderboard-home"></div>
-  </div>
-
-  <!-- ══ SINGLE PLAYER SETUP ══ -->
-  <div class="screen" id="screen-sp-setup">
-    <div class="hero-emoji">👨‍🚀</div>
-    <div class="title">Solo Mission</div>
     <div class="subtitle" id="sp-subtitle">What's your name, astronaut?</div>
     <div class="summary-total" id="sp-stats" style="display:none"></div>
     <input type="text" class="text-input" id="sp-name" placeholder="Your name" maxlength="20" autocomplete="off">
-    <input type="password" class="text-input" id="sp-password" placeholder="Password 🔒" maxlength="30" autocomplete="off" style="margin-top:-4px">
-    <div id="sp-login-error" style="color:var(--wrong);font-weight:800;min-height:18px;font-size:0.9rem"></div>
     <div class="game-settings" id="sp-game-settings">
       <div class="settings-title" id="sp-settings-title">Game Settings</div>
       <div class="settings-group">
@@ -285,9 +287,9 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
       <div class="settings-group">
         <div class="settings-label" id="sp-range-label">Number Range</div>
         <div class="range-row">
-          <input type="number" class="range-input" id="sp-range-min" value="1" min="1" max="99">
+          <input type="number" inputmode="numeric" pattern="[0-9]*" class="range-input" id="sp-range-min" value="1" min="1" max="99">
           <span class="range-dash" id="sp-range-dash">to</span>
-          <input type="number" class="range-input" id="sp-range-max" value="20" min="2" max="100">
+          <input type="number" inputmode="numeric" pattern="[0-9]*" class="range-input" id="sp-range-max" value="20" min="2" max="100">
         </div>
       </div>
       <div class="settings-group" style="margin-bottom:0">
@@ -301,7 +303,7 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
       </div>
     </div>
     <button class="btn" id="sp-start">Start! 🚀</button>
-    <button class="btn" id="sp-back" style="font-size:1rem;padding:10px 24px;background:rgba(255,255,255,0.1)">← Back</button>
+    <div class="leaderboard" id="leaderboard-setup"></div>
   </div>
 
   <!-- ══ SINGLE PLAYER GAME ══ -->
@@ -322,6 +324,20 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
     </div>
     <div class="feedback" id="sp-feedback">&nbsp;</div>
     <div class="keyboard-hint" id="sp-keyboard-hint">Type your answer and press Enter ⌨️</div>
+    <div class="keypad" id="sp-keypad" data-mode="sp">
+      <button class="keypad-btn" data-key="1">1</button>
+      <button class="keypad-btn" data-key="2">2</button>
+      <button class="keypad-btn" data-key="3">3</button>
+      <button class="keypad-btn" data-key="4">4</button>
+      <button class="keypad-btn" data-key="5">5</button>
+      <button class="keypad-btn" data-key="6">6</button>
+      <button class="keypad-btn" data-key="7">7</button>
+      <button class="keypad-btn" data-key="8">8</button>
+      <button class="keypad-btn" data-key="9">9</button>
+      <button class="keypad-btn kp-clear" data-key="clear">✕</button>
+      <button class="keypad-btn" data-key="0">0</button>
+      <button class="keypad-btn kp-enter" data-key="enter">↵</button>
+    </div>
     <div class="mission-briefing" id="sp-briefing">
       <div class="briefing-header">👨‍🚀 Mission Briefing</div>
       <div class="briefing-answer" id="sp-briefing-answer"></div>
@@ -342,102 +358,6 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
     <button class="btn" id="sp-home" style="font-size:1rem;padding:10px 24px;background:rgba(255,255,255,0.1)">← Main Menu</button>
   </div>
 
-  <!-- ══ MULTIPLAYER: CONNECTING ══ -->
-  <div class="screen" id="screen-connecting">
-    <div class="hero-emoji">🚀</div>
-    <div class="title">Space Math</div>
-    <div class="subtitle" id="connecting-msg">Connecting to server...</div>
-    <button class="btn" id="mp-back" style="font-size:1rem;padding:10px 24px;background:rgba(255,255,255,0.1)">← Back</button>
-  </div>
-
-  <!-- ══ MULTIPLAYER: LOBBY ══ -->
-  <div class="screen" id="screen-lobby">
-    <div class="hero-emoji">👨‍🚀🧑‍🚀</div>
-    <div class="title">Space Race</div>
-    <div class="subtitle" id="lobby-subtitle">Two-player space race!</div>
-    <div class="host-box" id="host-box" style="display:none"></div>
-    <div class="player-status">
-      <div class="player-badge" id="badge-1"><div class="badge-icon">👨‍🚀</div><div class="badge-name" id="badge-name-1">Player 1</div><div class="badge-status" id="badge-status-1">Waiting...</div></div>
-      <div class="player-badge" id="badge-2"><div class="badge-icon">🧑‍🚀</div><div class="badge-name" id="badge-name-2">Player 2</div><div class="badge-status" id="badge-status-2">Waiting...</div></div>
-    </div>
-    <div class="setup-row">
-      <span class="setup-label">Name:</span>
-      <input type="text" class="text-input" id="mp-name-input" placeholder="Your name" maxlength="20" autocomplete="off" style="max-width:220px">
-    </div>
-    <div class="game-settings" id="mp-game-settings">
-      <div class="settings-title" id="mp-settings-title">Game Settings</div>
-      <div class="settings-group">
-        <div class="settings-label" id="mp-timer-label">Timer</div>
-        <div class="timer-option">
-          <button class="toggle" id="mp-timer-toggle"></button>
-          <div class="timer-choices" id="mp-timer-choices" style="display:none">
-            <button data-sec="5">5s</button>
-            <button data-sec="10" class="active">10s</button>
-            <button data-sec="15">15s</button>
-          </div>
-        </div>
-      </div>
-      <div class="settings-group">
-        <div class="settings-label" id="mp-ops-label">Operations</div>
-        <div class="ops-row" id="mp-ops-row">
-          <button class="ops-btn active" data-op="+">➕ Addition</button>
-          <button class="ops-btn active" data-op="−">➖ Subtraction</button>
-        </div>
-      </div>
-      <div class="settings-group">
-        <div class="settings-label" id="mp-range-label">Number Range</div>
-        <div class="range-row">
-          <input type="number" class="range-input" id="mp-range-min" value="1" min="1" max="99">
-          <span class="range-dash" id="mp-range-dash">to</span>
-          <input type="number" class="range-input" id="mp-range-max" value="20" min="2" max="100">
-        </div>
-      </div>
-      <div class="settings-group" style="margin-bottom:0">
-        <div class="settings-label" id="mp-presets-label">Presets</div>
-        <div class="presets-row" id="mp-presets-row">
-          <button class="preset-btn" data-preset="starter">Starter</button>
-          <button class="preset-btn active" data-preset="classic">Classic</button>
-          <button class="preset-btn" data-preset="challenge">Challenge</button>
-          <button class="preset-btn" data-preset="expert">Expert</button>
-        </div>
-      </div>
-    </div>
-    <div class="small-note" id="timer-note">Only the host can start the game</div>
-    <button class="btn" id="btn-mp-start" style="display:none">Start Game! 🚀</button>
-    <div class="subtitle" id="lobby-wait" style="display:none">Waiting for host to start...</div>
-    <div class="leaderboard" id="leaderboard-lobby"></div>
-  </div>
-
-  <!-- ══ MULTIPLAYER: GAME ══ -->
-  <div class="screen" id="screen-mp-game">
-    <div class="scoreboard" id="mp-scoreboard"></div>
-    <div class="progress-bar"><div class="progress-fill" id="mp-progress-fill" style="width:0%"></div></div>
-    <div class="timer-bar" id="mp-timer-bar" style="display:none"><div class="timer-fill" id="mp-timer-fill"></div></div>
-    <div class="problem-box" id="mp-problem-box">
-      <div class="problem-text" id="mp-problem-text"></div>
-      <div class="answer-display" id="mp-answer-display"><span class="cursor"></span></div>
-    </div>
-    <div class="feedback" id="mp-feedback">&nbsp;</div>
-    <div class="keyboard-hint" id="mp-keyboard-hint">Type your answer and press Enter ⌨️</div>
-    <div class="mission-briefing" id="mp-briefing">
-      <div class="briefing-header">👨‍🚀 Mission Briefing</div>
-      <div class="briefing-answer" id="mp-briefing-answer"></div>
-      <div class="briefing-tip" id="mp-briefing-tip"></div>
-    </div>
-  </div>
-
-  <!-- ══ MULTIPLAYER: ROUND END ══ -->
-  <div class="screen" id="screen-mp-end">
-    <div class="hero-emoji" id="mp-end-emoji">🏆</div>
-    <div class="title" id="mp-end-title"></div>
-    <div class="winner-name" id="mp-end-winner"></div>
-    <div class="final-scores" id="mp-end-scores"></div>
-    <div class="leaderboard" id="leaderboard-mp-end"></div>
-    <button class="btn" id="btn-mp-again" style="display:none">Play Again! 🚀</button>
-    <div class="subtitle" id="mp-end-wait" style="display:none">Waiting for host to start...</div>
-    <button class="btn" id="mp-end-home" style="font-size:1rem;padding:10px 24px;background:rgba(255,255,255,0.1)">← Main Menu</button>
-  </div>
-
 </div>
 
 <script>
@@ -456,55 +376,22 @@ let currentLang = localStorage.getItem('spaceMathLang') || 'en';
 const LANG = {
   en: {
     pageTitle: 'Space Math',
-    chooseYourMission: 'Choose your mission!',
-    soloMission: 'Solo Mission',
-    practiceOnYourOwn: 'Practice on your own',
-    spaceRace: 'Space Race',
-    twoPlayersNetwork: 'Two players over network',
     whatsYourName: "What's your name, astronaut?",
     welcomeBack: name => `Welcome back, ${name}!`,
     starsRounds: (stars, rounds) => `⭐ ${stars} stars · ${rounds} rounds played`,
     yourName: 'Your name',
-    password: 'Password 🔒',
     timer: 'Timer',
     start: 'Start! 🚀',
-    back: '← Back',
     newRound: 'New Round! 🚀',
     mainMenu: '← Main Menu',
     typeAnswer: 'Type your answer and press Enter ⌨️',
     missionBriefing: '👨‍🚀 Mission Briefing',
     gotIt: 'Got it! ➡️',
-    connectingToServer: 'Connecting to server...',
-    disconnectedReconnecting: 'Disconnected. Reconnecting...',
-    cannotConnect: 'Cannot connect. Is the server running?',
-    gameFull: 'Game is full! Two players already connected.',
-    twoPlayerRace: 'Two-player space race!',
-    youAreHost: (ip, port) => `You are the <strong>host!</strong> Share this address:<br><code>http://${ip}:${port}</code>`,
-    onlyHostStart: 'Only the host can start the game',
-    onlyHostConfigure: 'Only the host can configure the timer and start',
-    startGame: 'Start Game! 🚀',
-    waitingForHost: 'Waiting for host to start...',
-    ready: 'Ready! ✅',
-    waiting: 'Waiting...',
-    playAgain: 'Play Again! 🚀',
-    player: s => 'Player ' + s,
-    playerDefault: 'Player',
-    name: 'Name:',
     leaderboardTitle: '🏆 Leaderboard',
     noScores: 'No scores yet!',
     you: '(you)',
     enterName: 'Please enter your name!',
-    enterPassword: 'Please enter a password!',
-    wrongPassword: 'Wrong password! Try again 🔒',
-    disconnected: name => `${name} disconnected!`,
     correctFeedback: name => pick([`Great job, ${name}! 🚀`, 'Amazing! 🌟', 'Correct! ⭐', `Fantastic, ${name}! 🪐`, 'Perfect! 🎉', 'Brilliant! 👨‍🚀']),
-    mpCorrectFeedback: () => pick(['Great job! 🚀', 'Amazing! 🌟', 'Correct! ⭐', 'Fantastic! 🪐', 'Perfect! 🎉']),
-    gotItFirst: (name, answer) => `${name} got it first! Answer: ${answer}`,
-    notQuiteWaiting: 'Not quite! Waiting for other player... 💪',
-    stealChance: name => `${name} missed it — your chance to steal! 🔥`,
-    youWin: 'You win this round!',
-    theyWin: name => `${name} wins!`,
-    itsTie: "It's a tie!",
     summaryIncredible: name => `Incredible, ${name}! 🏆`,
     summaryGreat: name => `Great work, ${name}! 🌟`,
     summaryGood: name => `Good effort, ${name}! 💪`,
@@ -513,7 +400,6 @@ const LANG = {
     totalStars: stars => `Total stars: ${stars} ⭐`,
     combo: n => `${n}x Combo! 🔥🚀`,
     briefingIntro: () => pick(["Here's how to solve it next time:", "Let's learn a trick for this one:", "Here's a cool way to figure it out:"]),
-    mpBriefingIntro: () => pick(["Here's how to solve it:", "A trick for this one:", "A cool way to figure it out:"]),
     // teaching tips
     tipNearDoubles: (a, b, sm, answer) => `<strong>Near-doubles trick! 🌟</strong><br>Look — ${a} and ${b} are almost the same number!<br>First, double the smaller one: ${sm} + ${sm} = ${sm*2}<br>Then just add 1 more: ${sm*2} + 1 = <strong>${answer}</strong>`,
     tipDoubles: (a, b, answer) => `<strong>Doubles! 🎯</strong><br>When both numbers are the same, it's easy!<br>${a} + ${a} means two groups of ${a}.<br>So ${a} + ${a} = <strong>${answer}</strong>`,
@@ -538,7 +424,6 @@ const LANG = {
     diffUpHard: '🔥🔥 On fire!',
     diffUpExpert: '⚡ Expert mode!',
     diffDown: '📉 Back to basics',
-    vs: 'VS',
     // game settings
     gameSettings: 'Game Settings',
     settingsOps: 'Operations',
@@ -555,55 +440,22 @@ const LANG = {
   },
   sr: {
     pageTitle: 'Свемирска Математика',
-    chooseYourMission: 'Изабери своју мисију!',
-    soloMission: 'Соло Мисија',
-    practiceOnYourOwn: 'Вежбај самостално',
-    spaceRace: 'Свемирска Трка',
-    twoPlayersNetwork: 'Два играча преко мреже',
     whatsYourName: 'Како се зовеш, астронауте?',
     welcomeBack: name => `Добро дошао назад, ${name}!`,
     starsRounds: (stars, rounds) => `⭐ ${stars} звездица · ${rounds} кругова одиграно`,
     yourName: 'Твоје име',
-    password: 'Лозинка 🔒',
     timer: 'Тајмер',
     start: 'Почни! 🚀',
-    back: '← Назад',
     newRound: 'Нови Круг! 🚀',
     mainMenu: '← Главни Мени',
     typeAnswer: 'Укуцај одговор и притисни Ентер ⌨️',
     missionBriefing: '👨‍🚀 Извештај са Мисије',
     gotIt: 'Разумем! ➡️',
-    connectingToServer: 'Повезивање на сервер...',
-    disconnectedReconnecting: 'Веза прекинута. Поновно повезивање...',
-    cannotConnect: 'Не могу да се повежем. Да ли сервер ради?',
-    gameFull: 'Игра је пуна! Два играча су већ повезана.',
-    twoPlayerRace: 'Свемирска трка за двоје!',
-    youAreHost: (ip, port) => `Ти си <strong>домаћин!</strong> Подели ову адресу:<br><code>http://${ip}:${port}</code>`,
-    onlyHostStart: 'Само домаћин може да покрене игру',
-    onlyHostConfigure: 'Само домаћин може да подеси тајмер и покрене игру',
-    startGame: 'Покрени Игру! 🚀',
-    waitingForHost: 'Чекам домаћина да покрене...',
-    ready: 'Спреман! ✅',
-    waiting: 'Чекам...',
-    playAgain: 'Играј Поново! 🚀',
-    player: s => 'Играч ' + s,
-    playerDefault: 'Играч',
-    name: 'Име:',
     leaderboardTitle: '🏆 Табела Победника',
     noScores: 'Нема резултата!',
     you: '(ти)',
     enterName: 'Унеси своје име!',
-    enterPassword: 'Унеси лозинку!',
-    wrongPassword: 'Погрешна лозинка! Покушај поново 🔒',
-    disconnected: name => `${name} се искључио!`,
     correctFeedback: name => pick([`Браво, ${name}! 🚀`, 'Одлично! 🌟', 'Тачно! ⭐', `Фантастично, ${name}! 🪐`, 'Савршено! 🎉', 'Бриљантно! 👨‍🚀']),
-    mpCorrectFeedback: () => pick(['Браво! 🚀', 'Одлично! 🌟', 'Тачно! ⭐', 'Фантастично! 🪐', 'Савршено! 🎉']),
-    gotItFirst: (name, answer) => `${name} је први одговорио! Одговор: ${answer}`,
-    notQuiteWaiting: 'Није тачно! Чекам другог играча... 💪',
-    stealChance: name => `${name} је промашио — твоја шанса! 🔥`,
-    youWin: 'Победио си у овом кругу!',
-    theyWin: name => `${name} побеђује!`,
-    itsTie: 'Нерешено!',
     summaryIncredible: name => `Невероватно, ${name}! 🏆`,
     summaryGreat: name => `Одличан посао, ${name}! 🌟`,
     summaryGood: name => `Добар покушај, ${name}! 💪`,
@@ -612,7 +464,6 @@ const LANG = {
     totalStars: stars => `Укупно звездица: ${stars} ⭐`,
     combo: n => `${n}x Комбо! 🔥🚀`,
     briefingIntro: () => pick(['Ево како да решиш следећи пут:', 'Научи трик за ово:', 'Ево једног кул начина:']),
-    mpBriefingIntro: () => pick(['Ево решења:', 'Трик за ово:', 'Кул начин да решиш:']),
     // teaching tips
     tipNearDoubles: (a, b, sm, answer) => `<strong>Скоро дупли бројеви! 🌟</strong><br>Гледај — ${a} и ${b} су скоро исти број!<br>Прво дуплирај мањи: ${sm} + ${sm} = ${sm*2}<br>Онда додај још 1: ${sm*2} + 1 = <strong>${answer}</strong>`,
     tipDoubles: (a, b, answer) => `<strong>Дупли бројеви! 🎯</strong><br>Кад су оба броја иста, лако је!<br>${a} + ${a} значи две групе од ${a}.<br>Зато ${a} + ${a} = <strong>${answer}</strong>`,
@@ -637,7 +488,6 @@ const LANG = {
     diffUpHard: '🔥🔥 Гориш!',
     diffUpExpert: '⚡ Експертски мод!',
     diffDown: '📉 Испочетка',
-    vs: 'ПРОТИВ',
     // game settings
     gameSettings: 'Подешавања Игре',
     settingsOps: 'Операције',
@@ -665,20 +515,11 @@ function setLang(lang) {
 
 function applyLanguage() {
   document.title = t('pageTitle');
-  // Mode screen
-  document.querySelector('#screen-mode .title').textContent = t('pageTitle');
-  document.querySelector('#screen-mode .subtitle').textContent = t('chooseYourMission');
-  document.querySelector('#mode-single .mode-title').textContent = t('soloMission');
-  document.querySelector('#mode-single .mode-desc').textContent = t('practiceOnYourOwn');
-  document.querySelector('#mode-multi .mode-title').textContent = t('spaceRace');
-  document.querySelector('#mode-multi .mode-desc').textContent = t('twoPlayersNetwork');
   // SP setup
-  document.querySelector('#screen-sp-setup .title').textContent = t('soloMission');
+  document.querySelector('#screen-sp-setup .title').textContent = t('pageTitle');
   $('sp-name').placeholder = t('yourName');
-  $('sp-password').placeholder = t('password');
   $('sp-timer-label').textContent = t('timer');
   $('sp-start').textContent = t('start');
-  $('sp-back').textContent = t('back');
   // SP game settings
   $('sp-settings-title').textContent = t('gameSettings');
   $('sp-ops-label').textContent = t('settingsOps');
@@ -694,35 +535,6 @@ function applyLanguage() {
   // SP end
   $('sp-again').textContent = t('newRound');
   $('sp-home').textContent = t('mainMenu');
-  // Connecting
-  document.querySelector('#screen-connecting .title').textContent = t('pageTitle');
-  $('mp-back').textContent = t('back');
-  // Lobby
-  document.querySelector('#screen-lobby .title').textContent = t('spaceRace');
-  $('lobby-subtitle').textContent = t('twoPlayerRace');
-  document.querySelector('#screen-lobby .setup-label').textContent = t('name');
-  $('mp-name-input').placeholder = t('yourName');
-  $('mp-timer-label').textContent = t('timer');
-  if (mySlot === '1') $('timer-note').textContent = '';
-  else if (mySlot === '2') $('timer-note').textContent = t('onlyHostConfigure');
-  else $('timer-note').textContent = t('onlyHostStart');
-  // MP game settings
-  $('mp-settings-title').textContent = t('gameSettings');
-  $('mp-ops-label').textContent = t('settingsOps');
-  $('mp-range-label').textContent = t('settingsRange');
-  $('mp-range-dash').textContent = t('settingsRangeTo');
-  $('mp-presets-label').textContent = t('settingsPresets');
-  $('mp-ops-row').querySelectorAll('.ops-btn').forEach(b => b.textContent = b.dataset.op === '+' ? t('opAddition') : t('opSubtraction'));
-  $('mp-presets-row').querySelectorAll('.preset-btn').forEach(b => b.textContent = t('preset' + b.dataset.preset.charAt(0).toUpperCase() + b.dataset.preset.slice(1)));
-  $('btn-mp-start').textContent = t('startGame');
-  $('lobby-wait').textContent = t('waitingForHost');
-  // MP game
-  $('mp-keyboard-hint').textContent = t('typeAnswer');
-  document.querySelector('#mp-briefing .briefing-header').textContent = t('missionBriefing');
-  // MP end
-  $('btn-mp-again').textContent = t('playAgain');
-  $('mp-end-wait').textContent = t('waitingForHost');
-  $('mp-end-home').textContent = t('mainMenu');
   // SP setup subtitle (context-dependent)
   const saved = localStorage.getItem('spaceMathName');
   if (saved) {
@@ -736,33 +548,6 @@ function applyLanguage() {
   } else {
     $('sp-subtitle').textContent = t('whatsYourName');
   }
-  // Connecting screen
-  $('connecting-msg').textContent = t('connectingToServer');
-  // Lobby host box
-  if (mySlot === '1' && mpHostIp) {
-    $('host-box').innerHTML = LANG[currentLang].youAreHost(mpHostIp, mpHostPort);
-  }
-  // Lobby badges
-  for (const s of ['1', '2']) {
-    const nameEl = $('badge-name-' + s);
-    const statusEl = $('badge-status-' + s);
-    const badge = $('badge-' + s);
-    if (badge.classList.contains('connected')) {
-      statusEl.textContent = t('ready');
-    } else {
-      nameEl.textContent = LANG[currentLang].player(s);
-      statusEl.textContent = t('waiting');
-    }
-  }
-  // Re-render MP scoreboard if in MP game
-  if ($('screen-mp-game').classList.contains('active')) {
-    // Scoreboard will update on next problem/event; force re-render of current state
-    const sbEl = $('mp-scoreboard');
-    if (sbEl.innerHTML) {
-      // Update (you) and VS labels in existing scoreboard
-      sbEl.querySelectorAll('.sb-vs').forEach(el => el.textContent = t('vs'));
-    }
-  }
   // Re-render leaderboards that are visible
   const activeScreen = document.querySelector('.screen.active');
   if (activeScreen) {
@@ -773,6 +558,8 @@ function applyLanguage() {
       if (emptyEl) emptyEl.textContent = t('noScores');
     }
   }
+  // Re-render setup leaderboard with current language
+  renderLeaderboard('leaderboard-setup', getSPLeaderboard(), localStorage.getItem('spaceMathName') || '');
 }
 
 // Language switcher clicks
@@ -1100,34 +887,17 @@ function saveSPLeaderboard(lb){localStorage.setItem('spaceMathLB',JSON.stringify
 function updateSPLeaderboard(name,stars){
   const lb=getSPLeaderboard();
   const e=lb.find(x=>x.name.toLowerCase()===name.toLowerCase());
-  if(e){e.stars+=stars;e.rounds++;e.name=name;}else lb.push({name,stars,rounds:1,pw:sp.password});
+  if(e){e.stars+=stars;e.rounds++;e.name=name;}else lb.push({name,stars,rounds:1});
   lb.sort((a,b)=>b.stars-a.stars);saveSPLeaderboard(lb);return lb;
-}
-function authenticatePlayer(name,password){
-  if(!name)return{ok:false,msg:t('enterName')};
-  if(!password)return{ok:false,msg:t('enterPassword')};
-  const lb=getSPLeaderboard();
-  const e=lb.find(x=>x.name.toLowerCase()===name.toLowerCase());
-  if(e){
-    // Existing player — password must match
-    if(e.pw!==password)return{ok:false,msg:t('wrongPassword')};
-    return{ok:true,entry:e};
-  }
-  // New player — register immediately with password
-  lb.push({name,stars:0,rounds:0,pw:password});
-  saveSPLeaderboard(lb);
-  return{ok:true,entry:null};
 }
 
 // ════════════════════════════════════════════
 //  SINGLE PLAYER MODE
 // ════════════════════════════════════════════
 const ROUND_SIZE=10;
-let sp={name:'Astronaut',password:'',currentProblem:null,current:0,stars:0,totalStars:0,combo:0,prevDiff:'easy',answered:false,input:'',timerEnabled:false,timerSec:10,timerHandle:null};
+let sp={name:'Astronaut',currentProblem:null,current:0,stars:0,totalStars:0,combo:0,prevDiff:'easy',answered:false,input:'',timerEnabled:false,timerSec:10,timerHandle:null};
 
 function spSetup(){
-  $('sp-login-error').textContent='';
-  $('sp-password').value='';
   $('sp-stats').style.display='none';
   $('sp-subtitle').textContent=t('whatsYourName');
   const saved=localStorage.getItem('spaceMathName');
@@ -1136,16 +906,14 @@ function spSetup(){
     if(e){$('sp-subtitle').textContent=LANG[currentLang].welcomeBack(saved);$('sp-stats').style.display='';$('sp-stats').textContent=LANG[currentLang].starsRounds(e.stars,e.rounds);}
   }
   applySettingsToUI('sp');
+  renderLeaderboard('leaderboard-setup',getSPLeaderboard(),localStorage.getItem('spaceMathName')||'');
   showScreen('sp-setup');
 }
 
 function spStartRound(){
   const name=$('sp-name').value.trim();
-  const password=$('sp-password').value;
-  const auth=authenticatePlayer(name,password);
-  if(!auth.ok){$('sp-login-error').textContent=auth.msg;return;}
-  $('sp-login-error').textContent='';
-  sp.name=name;sp.password=password;
+  if(!name){$('sp-subtitle').textContent=t('enterName');return;}
+  sp.name=name;
   localStorage.setItem('spaceMathName',sp.name);
   sp.current=0;sp.stars=0;sp.combo=0;sp.prevDiff='easy';
   SFX.start();showScreen('sp-game');spLoadProblem();
@@ -1215,9 +983,9 @@ function spShowBriefing(p){
   $('sp-briefing-answer').textContent=problemDisplayText(p)+p.answer;
   $('sp-briefing-tip').innerHTML=`<div style="margin-bottom:8px;color:rgba(255,255,255,0.7)">${LANG[currentLang].briefingIntro()}</div>${tip}`;
   $('sp-briefing').classList.add('visible');
-  $('sp-problem-box').style.display='none';$('sp-feedback').style.display='none';$('sp-keyboard-hint').style.display='none';
+  $('sp-problem-box').style.display='none';$('sp-feedback').style.display='none';$('sp-keyboard-hint').style.display='none';$('sp-keypad').style.display='none';
 }
-function spHideBriefing(){$('sp-briefing').classList.remove('visible');$('sp-problem-box').style.display='';$('sp-feedback').style.display='';}
+function spHideBriefing(){$('sp-briefing').classList.remove('visible');$('sp-problem-box').style.display='';$('sp-feedback').style.display='';$('sp-keypad').style.display='';}
 
 $('sp-got-it').addEventListener('click',()=>{SFX.tap();spHideBriefing();sp.current++;spLoadProblem();});
 
@@ -1240,133 +1008,47 @@ $('sp-timer-toggle').addEventListener('click',()=>{sp.timerEnabled=!sp.timerEnab
 $('sp-timer-choices').addEventListener('click',e=>{const b=e.target.closest('[data-sec]');if(!b)return;sp.timerSec=parseInt(b.dataset.sec,10);$('sp-timer-choices').querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
 $('sp-start').addEventListener('click',spStartRound);
 $('sp-again').addEventListener('click',spStartRound);
-$('sp-name').addEventListener('keydown',e=>{if(e.key==='Enter')$('sp-password').focus();});
-$('sp-password').addEventListener('keydown',e=>{if(e.key==='Enter'){e.target.blur();spStartRound();}});
-$('sp-back').addEventListener('click',()=>showScreen('mode'));
-$('sp-home').addEventListener('click',()=>{showScreen('mode');initHome();});
+$('sp-name').addEventListener('keydown',e=>{if(e.key==='Enter'){e.target.blur();spStartRound();}});
+$('sp-home').addEventListener('click',()=>{spSetup();});
 setupSettingsHandlers('sp');
 
 // ════════════════════════════════════════════
-//  MULTIPLAYER MODE
+//  INPUT ROUTING (physical keyboard + on-screen keypad)
 // ════════════════════════════════════════════
-let ws=null,mySlot=null,myName='',mpInput='',mpAnswered=false,mpCombo=0,mpPrevDiff='easy';
-let mpTimerEnabled=false,mpTimerSec=10,mpHostIp='',mpHostPort='',mpMaxNum=20;
-
-function mpConnect(){
-  showScreen('connecting');$('connecting-msg').textContent=t('connectingToServer');
-  const proto=location.protocol==='https:'?'wss':'ws';
-  ws=new WebSocket(`${proto}://${location.host}`);
-  ws.onmessage=e=>mpHandle(JSON.parse(e.data));
-  ws.onclose=()=>{if($('screen-connecting').classList.contains('active')||$('screen-lobby').classList.contains('active')||$('screen-mp-game').classList.contains('active')||$('screen-mp-end').classList.contains('active')){$('connecting-msg').textContent=t('disconnectedReconnecting');showScreen('connecting');setTimeout(mpConnect,2000);}};
-  ws.onerror=()=>{$('connecting-msg').textContent=t('cannotConnect');};
-}
-function mpSend(msg){if(ws&&ws.readyState===1)ws.send(JSON.stringify(msg));}
-function mpDisconnect(){if(ws){ws.onclose=null;ws.close();ws=null;}showScreen('mode');initHome();}
-
-function mpHandle(msg){
-  switch(msg.type){
-    case 'welcome':
-      mySlot=msg.slot;myName=msg.defaultName;$('mp-name-input').value=myName;
-      if(mySlot==='1'){mpHostIp=msg.ip;mpHostPort=msg.port;$('host-box').style.display='';$('host-box').innerHTML=LANG[currentLang].youAreHost(msg.ip,msg.port);$('btn-mp-start').style.display='';$('lobby-wait').style.display='none';$('timer-note').textContent='';}
-      else{$('host-box').style.display='none';$('btn-mp-start').style.display='none';$('lobby-wait').style.display='';$('timer-note').textContent=t('onlyHostConfigure');}
-      mpUpdateBadge(msg.slot,msg.defaultName,true);
-      renderLeaderboard('leaderboard-lobby',msg.leaderboard||[],myName);
-      applySettingsToUI('mp');
-      showScreen('lobby');break;
-    case 'full':$('connecting-msg').textContent=t('gameFull');break;
-    case 'player-joined':mpUpdateBadge(msg.slot,msg.name,true);break;
-    case 'player-update':for(const[s,i]of Object.entries(msg.players))mpUpdateBadge(s,i.name,true);break;
-    case 'player-left':for(const s of['1','2'])if(s!==mySlot)mpUpdateBadge(s,LANG[currentLang].player(s),false);
-      if(mpGameActive()){showScreen('lobby');$('lobby-subtitle').textContent=LANG[currentLang].disconnected(msg.name);}break;
-    case 'game-start':SFX.start();mpCombo=0;mpAnswered=false;mpPrevDiff='easy';mpMaxNum=msg.maxNum||20;showScreen('mp-game');break;
-    case 'problem':
-      mpAnswered=false;mpInput='';mpUpdateAnswer();mpHideBriefing();
-      if(msg.twoStep)$('mp-problem-text').textContent=`${msg.a} ${msg.op1} ${msg.b} ${msg.op2} ${msg.c} = ?`;
-      else $('mp-problem-text').textContent=`${msg.a} ${msg.op} ${msg.b} = ?`;
-      $('mp-feedback').innerHTML='&nbsp;';$('mp-feedback').className='feedback';$('mp-keyboard-hint').style.display='';
-      $('mp-progress-fill').style.width=(msg.index/msg.total*100)+'%';
-      mpRenderScoreboard(msg.scores,msg.streaks);
-      if(msg.timerEnabled){$('mp-timer-bar').style.display='';startTimerAnim('mp-timer-fill',msg.timerSeconds);}
-      else{$('mp-timer-bar').style.display='none';stopTimerAnim();}break;
-    case 'correct':{stopTimerAnim();const isMe=msg.slot===mySlot;
-      const oldDiff=getDifficulty(mpCombo);
-      if(isMe){mpCombo++;const ic=mpCombo>=3;if(ic)SFX.combo();else SFX.correct();celebrateCorrect(ic,mpCombo);$('mp-feedback').textContent=LANG[currentLang].mpCorrectFeedback();$('mp-feedback').className='feedback correct';flashDiffChange(oldDiff,getDifficulty(mpCombo));}
-      else{const od2=getDifficulty(mpCombo);mpCombo=0;flashDiffChange(od2,getDifficulty(0));$('mp-feedback').textContent=LANG[currentLang].gotItFirst(msg.name,msg.answer);$('mp-feedback').className='feedback wrong';SFX.reveal();}
-      $('mp-keyboard-hint').style.display='none';mpRenderScoreboard(msg.scores,msg.streaks);break;}
-    case 'wrong':if(msg.slot===mySlot){SFX.wrong();const od=getDifficulty(mpCombo);mpCombo=0;flashDiffChange(od,getDifficulty(0));mpAnswered=true;$('mp-feedback').textContent=t('notQuiteWaiting');$('mp-feedback').className='feedback wrong';$('mp-keyboard-hint').style.display='none';}break;
-    case 'steal-chance':$('mp-feedback').textContent=LANG[currentLang].stealChance(msg.name);$('mp-feedback').className='feedback correct';break;
-    case 'both-wrong':case 'timeout':
-      stopTimerAnim();mpAnswered=true;const od3=getDifficulty(mpCombo);mpCombo=0;flashDiffChange(od3,getDifficulty(0));SFX.reveal();
-      mpShowBriefing(msg.problem,msg.answer);$('mp-keyboard-hint').style.display='none';mpRenderScoreboard(msg.scores,msg.streaks);break;
-    case 'round-end':{
-      SFX.fanfare();const scores=msg.scores;let title,emoji;
-      if(msg.winnerSlot){const isMe=msg.winnerSlot===mySlot;title=isMe?t('youWin'):LANG[currentLang].theyWin(msg.winnerName);emoji=isMe?'🏆🎉🚀':'🪐⭐';if(isMe)celebrateCorrect(true,5);}
-      else{title=t('itsTie');emoji='🤝⭐';}
-      $('mp-end-emoji').textContent=emoji;$('mp-end-title').textContent=title;$('mp-end-winner').textContent=msg.winnerName?`🏆 ${msg.winnerName}`:'';
-      let sh='';for(const[s,i]of Object.entries(scores))sh+=`<span${s===msg.winnerSlot?' style="color:var(--accent)"':''}>${escapeHTML(i.name)} ⭐${i.score}</span>`;
-      $('mp-end-scores').innerHTML=sh;
-      if(mySlot==='1'){$('btn-mp-again').style.display='';$('mp-end-wait').style.display='none';}else{$('btn-mp-again').style.display='none';$('mp-end-wait').style.display='';}
-      renderLeaderboard('leaderboard-mp-end',msg.leaderboard||[],myName);showScreen('mp-end');break;}
-  }
-}
-
-function mpGameActive(){return $('screen-mp-game').classList.contains('active');}
-function mpUpdateBadge(s,n,c){$('badge-name-'+s).textContent=n;$('badge-status-'+s).textContent=c?t('ready'):t('waiting');const b=$('badge-'+s);if(c)b.classList.add('connected');else b.classList.remove('connected');}
-function mpRenderScoreboard(scores,streaks){if(!scores)return;const slots=Object.keys(scores).sort();let h='';for(let i=0;i<slots.length;i++){const s=slots[i],info=scores[s],isMe=s===mySlot;const streak=streaks?streaks[s]||0:0;const diff=getDifficulty(streak);if(i>0)h+='<div class="sb-vs">'+t('vs')+'</div>';h+=`<div class="sb-player${isMe?' me':''}"><div class="sb-name">${escapeHTML(info.name)}${isMe?' '+t('you'):''}</div><div class="sb-score">⭐ ${info.score}${streak>0?' <span class="sb-streak">🔥x'+streak+'</span>':''}</div><div class="sb-diff">${getDiffLabel(diff)}</div></div>`;}$('mp-scoreboard').innerHTML=h;}
-function mpUpdateAnswer(){const el=$('mp-answer-display');el.innerHTML=mpInput===''?'<span class="cursor"></span>':escapeHTML(mpInput);}
-function mpSubmit(){if(mpAnswered||mpInput==='')return;SFX.submit();mpAnswered=true;mpSend({type:'answer',value:mpInput});}
-function mpShowBriefing(prob,ans){const tip=generateTip(prob);$('mp-briefing-answer').textContent=problemDisplayText(prob)+ans;$('mp-briefing-tip').innerHTML=`<div style="margin-bottom:8px;color:rgba(255,255,255,0.7)">${LANG[currentLang].mpBriefingIntro()}</div>${tip}`;$('mp-briefing').classList.add('visible');$('mp-problem-box').style.display='none';$('mp-feedback').style.display='none';}
-function mpHideBriefing(){$('mp-briefing').classList.remove('visible');$('mp-problem-box').style.display='';$('mp-feedback').style.display='';}
-
-// MP controls
-$('mp-name-input').addEventListener('input',()=>{myName=$('mp-name-input').value.trim()||t('playerDefault');mpSend({type:'set-name',name:myName});});
-$('mp-name-input').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
-$('mp-timer-toggle').addEventListener('click',()=>{mpTimerEnabled=!mpTimerEnabled;$('mp-timer-toggle').classList.toggle('on',mpTimerEnabled);$('mp-timer-choices').style.display=mpTimerEnabled?'flex':'none';});
-$('mp-timer-choices').addEventListener('click',e=>{const b=e.target.closest('[data-sec]');if(!b)return;mpTimerSec=parseInt(b.dataset.sec,10);$('mp-timer-choices').querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
-$('btn-mp-start').addEventListener('click',()=>mpSend({type:'start-game',timerEnabled:mpTimerEnabled,timerSeconds:mpTimerSec,settings:{ops:gameSettings.ops,minNum:gameSettings.minNum,maxNum:gameSettings.maxNum}}));
-$('btn-mp-again').addEventListener('click',()=>mpSend({type:'start-game',timerEnabled:mpTimerEnabled,timerSeconds:mpTimerSec,settings:{ops:gameSettings.ops,minNum:gameSettings.minNum,maxNum:gameSettings.maxNum}}));
-$('mp-back').addEventListener('click',mpDisconnect);
-$('mp-end-home').addEventListener('click',mpDisconnect);
-setupSettingsHandlers('mp');
-
-// ════════════════════════════════════════════
-//  KEYBOARD INPUT (routes to active mode)
-// ════════════════════════════════════════════
-document.addEventListener('keydown',e=>{
-  // skip if typing in any input
-  if(document.activeElement&&document.activeElement.tagName==='INPUT')return;
-
-  // single player game
-  if($('screen-sp-game').classList.contains('active')){
-    if($('sp-briefing').classList.contains('visible')){
-      if(e.key==='Enter'){SFX.tap();spHideBriefing();sp.current++;spLoadProblem();}return;
-    }
-    if(e.key>='0'&&e.key<='9'){SFX.tap();if(sp.answered)return;const p=sp.input+e.key,n=parseInt(p,10);if(n>gameSettings.maxNum||p.length>3)return;sp.input=String(n);spUpdateAnswer();}
-    else if(e.key==='Backspace'){SFX.clear();if(sp.answered)return;sp.input='';spUpdateAnswer();}
-    else if(e.key==='Enter')spSubmit();
+function handleSpKey(key){
+  if($('sp-briefing').classList.contains('visible')){
+    if(key==='Enter'){SFX.tap();spHideBriefing();sp.current++;spLoadProblem();}
     return;
   }
-
-  // multiplayer game
-  if($('screen-mp-game').classList.contains('active')){
-    if(e.key>='0'&&e.key<='9'){SFX.tap();if(mpAnswered)return;const p=mpInput+e.key,n=parseInt(p,10);if(n>mpMaxNum||p.length>3)return;mpInput=String(n);mpUpdateAnswer();}
-    else if(e.key==='Backspace'){SFX.clear();if(mpAnswered)return;mpInput='';mpUpdateAnswer();}
-    else if(e.key==='Enter')mpSubmit();
-  }
+  if(key>='0'&&key<='9'){SFX.tap();if(sp.answered)return;const p=sp.input+key,n=parseInt(p,10);if(n>gameSettings.maxNum||p.length>3)return;sp.input=String(n);spUpdateAnswer();}
+  else if(key==='Backspace'){SFX.clear();if(sp.answered)return;sp.input='';spUpdateAnswer();}
+  else if(key==='Enter')spSubmit();
+}
+document.addEventListener('keydown',e=>{
+  if(document.activeElement&&document.activeElement.tagName==='INPUT')return;
+  if($('screen-sp-game').classList.contains('active'))handleSpKey(e.key);
 });
 
-// ════════════════════════════════════════════
-//  MODE SELECT & HOME
-// ════════════════════════════════════════════
-function initHome(){
-  const lb=getSPLeaderboard();
-  renderLeaderboard('leaderboard-home',lb,localStorage.getItem('spaceMathName')||'');
+// On-screen keypad (touch devices)
+if(matchMedia('(hover: none) and (pointer: coarse)').matches||'ontouchstart' in window){
+  document.body.classList.add('touch');
 }
+function bindKeypad(id,handler){
+  $(id).addEventListener('click',e=>{
+    const b=e.target.closest('.keypad-btn'); if(!b)return;
+    const k=b.dataset.key;
+    if(k==='clear')handler('Backspace');
+    else if(k==='enter')handler('Enter');
+    else handler(k);
+    b.blur();
+  });
+}
+bindKeypad('sp-keypad',handleSpKey);
 
-$('mode-single').addEventListener('click',()=>{SFX.tap();spSetup();});
-$('mode-multi').addEventListener('click',()=>{SFX.tap();mpConnect();});
-
-initHome();
+// ════════════════════════════════════════════
+//  BOOTSTRAP
+// ════════════════════════════════════════════
+spSetup();
 setLang(currentLang);
 </script>
 </body>

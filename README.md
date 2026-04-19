@@ -1,6 +1,6 @@
 # Space Math
 
-A space-themed math game for kids. Practice addition and subtraction solo, or race a friend over your home network.
+A space-themed math game for kids. Practice addition and subtraction right in your browser — no installation, no server, no account.
 
 **[Прочитај на српском (README_SR.md)](README_SR.md)**
 
@@ -8,111 +8,42 @@ A space-themed math game for kids. Practice addition and subtraction solo, or ra
 
 ## What You Need
 
-- A computer (Mac, Windows, or Linux)
-- An internet connection (only needed once, for the install step)
+- A web browser (Chrome, Safari, Firefox, or Edge — any will work)
+
+That's it. No installation, no internet after download.
 
 ---
 
-## How to Install
+## How to Play
 
-### Step 1: Install Node.js
+### Step 1: Download the Game
 
-Node.js is a free program that runs the game. You only need to install it once.
-
-1. Go to **https://nodejs.org**
-2. Click the big green button that says **"LTS"** (the recommended version)
-3. Open the downloaded file and follow the installer — just keep clicking **Next** / **Continue** until it's done
-4. Restart your computer after installing
-
-### Step 2: Download the Game
-
-1. Go to this page: **https://github.com/njelic04/space-math**
+1. Go to **https://github.com/njelic04/space-math**
 2. Click the green **"Code"** button
 3. Click **"Download ZIP"**
 4. Find the downloaded ZIP file (usually in your **Downloads** folder) and unzip it
    - **Mac**: Double-click the ZIP file
    - **Windows**: Right-click the ZIP file and choose **"Extract All"**
 
-### Step 3: Install Game Dependencies
+### Step 2: Open the Game
 
-You only need to do this once after downloading.
+1. Open the unzipped folder
+2. Double-click **`index.html`**
 
-1. Open a terminal:
-   - **Mac**: Open the app called **Terminal** (search for it in Spotlight with Cmd + Space)
-   - **Windows**: Open the app called **Command Prompt** (search for it in the Start menu)
-2. Type the following and press Enter (copy-paste is easiest):
-   ```
-   cd Downloads/space-math-main
-   ```
-   > If you moved the folder somewhere else, replace the path above with where you put it.
-3. Type this and press Enter:
-   ```
-   npm install
-   ```
-   Wait a few seconds until it finishes.
+The game opens right in your browser. That's it!
 
 ---
 
 ## How to Play
 
-### Start the Game
-
-1. Open a terminal (same as Step 3 above)
-2. Go to the game folder:
-   ```
-   cd Downloads/space-math-main
-   ```
-3. Start the game:
-   ```
-   npm start
-   ```
-4. You should see a message like:
-   ```
-   Space Math Server Running!
-   Local:   http://localhost:3000
-   Network: http://192.168.x.x:3000
-   ```
-5. Open your web browser (Chrome, Safari, Firefox, Edge — any will work)
-6. Go to **http://localhost:3000**
-
-That's it! The game is running!
-
-### Solo Mode
-
-Click **Solo Mission**, enter your name and a password (to save your score), and start playing!
-
+- Type your name and press **Enter**
 - Choose your operations (addition, subtraction, or both)
 - Pick a number range (1-10 for beginners, up to 1-100 for a challenge)
 - Use the quick presets: **Starter**, **Classic**, **Challenge**, or **Expert**
+- Optionally turn on a timer for extra challenge
 - Type your answer with the keyboard and press **Enter**
 
-### Two-Player Mode (Space Race)
-
-Play against someone on the same Wi-Fi network!
-
-1. Start the game on your computer (follow the steps above)
-2. Click **Space Race** on your computer — you'll see a network address like `http://192.168.x.x:3000`
-3. On the second player's device (phone, tablet, or another computer), open a browser and type in that address
-4. Both players are now connected! The host clicks **Start Game**
-
----
-
-## How to Stop the Game
-
-In the terminal where the game is running, press **Ctrl + C** to stop it.
-
----
-
-## Troubleshooting
-
-**"command not found: node" or "command not found: npm"**
-Node.js isn't installed yet, or you need to restart your terminal after installing. Go back to Step 1.
-
-**"address already in use"**
-The game is already running in another terminal. Close that terminal first, or press Ctrl + C in it.
-
-**The second player can't connect**
-Make sure both devices are on the same Wi-Fi network. Use the Network address shown in the terminal (not `localhost`).
+Your scores are saved in the browser, so you can come back and beat your high score anytime.
 
 ---
 
