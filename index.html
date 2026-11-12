@@ -137,7 +137,7 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
 .settings-title { font-family:'Fredoka One',cursive; font-size:0.95rem; color:var(--accent); margin-bottom:10px; }
 .settings-group { margin-bottom:10px; }
 .settings-label { font-size:0.8rem; opacity:0.6; margin-bottom:5px; }
-.ops-row { display:flex; gap:8px; justify-content:center; }
+.ops-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
 .ops-btn { font-family:'Fredoka One',cursive; font-size:0.95rem; padding:7px 16px; border:2px solid rgba(255,255,255,0.15); border-radius:12px; background:transparent; color:var(--text); cursor:pointer; transition:all 0.15s; opacity:0.4; }
 .ops-btn.active { border-color:var(--correct); background:rgba(76,255,142,0.15); color:var(--correct); opacity:1; }
 .range-row { display:flex; align-items:center; gap:10px; justify-content:center; }
@@ -148,6 +148,15 @@ html, body { height:100%; font-family:'Nunito',sans-serif; background:var(--bg-d
 .presets-row { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
 .preset-btn { font-family:'Fredoka One',cursive; font-size:0.78rem; padding:5px 11px; border:2px solid rgba(255,255,255,0.15); border-radius:10px; background:transparent; color:var(--text); cursor:pointer; transition:all 0.15s; }
 .preset-btn.active { border-color:var(--accent); background:rgba(255,204,0,0.15); color:var(--accent); }
+
+/* mode switch: number math vs. unit conversion */
+.mode-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.mode-btn { font-family:'Fredoka One',cursive; font-size:1rem; padding:8px 18px; border:2px solid rgba(255,255,255,0.15); border-radius:14px; background:transparent; color:var(--text); cursor:pointer; opacity:0.5; transition:all 0.15s; }
+.mode-btn.active { border-color:#e040fb; background:rgba(224,64,251,0.18); opacity:1; }
+.game-settings[data-mode="math"] .units-only, .game-settings[data-mode="units"] .math-only { display:none; }
+.units-ref { font-size:0.78rem; opacity:0.55; margin-top:8px; line-height:1.5; }
+.answer-unit { font-size:0.55em; opacity:0.55; margin-left:10px; }
+.problem-text.long { font-size:2.2rem; }
 
 /* on-screen numeric keypad (touch devices only) */
 .keypad { display:none; width:100%; max-width:360px; margin-top:4px; grid-template-columns:repeat(3, 1fr); gap:8px; flex-shrink:0; }
@@ -177,6 +186,8 @@ body.touch .keyboard-hint { display:none; }
   #app { padding:12px; padding-top:max(12px, env(safe-area-inset-top)); padding-bottom:max(12px, env(safe-area-inset-bottom)); }
   .title { font-size:1.7rem; }
   .problem-text { font-size:2.4rem; }
+  .problem-text.long { font-size:1.7rem; }
+  .mode-btn { font-size:0.9rem; padding:8px 14px; min-height:38px; }
   .answer-display { font-size:2.6rem; height:44px; }
   .answer-display .cursor { height:32px; }
   .hero-emoji { font-size:3.2rem; }
@@ -217,6 +228,7 @@ body.touch .keyboard-hint { display:none; }
 @media (max-width:360px) {
   .title { font-size:1.5rem; }
   .problem-text { font-size:2rem; letter-spacing:1px; }
+  .problem-text.long { font-size:1.45rem; }
   .answer-display { font-size:2.3rem; height:40px; }
   .answer-display .cursor { height:28px; }
   .problem-box { padding:14px 10px; }
@@ -237,6 +249,7 @@ body.touch .keyboard-hint { display:none; }
   .subtitle { font-size:0.9rem; }
   .problem-box { padding:10px 14px; }
   .problem-text { font-size:1.8rem; }
+  .problem-text.long { font-size:1.4rem; }
   .answer-display { font-size:2rem; height:34px; margin-top:0; }
   .answer-display .cursor { height:24px; }
   .feedback { min-height:24px; font-size:0.9rem; }
@@ -264,7 +277,11 @@ body.touch .keyboard-hint { display:none; }
     <div class="subtitle" id="sp-subtitle">What's your name, astronaut?</div>
     <div class="summary-total" id="sp-stats" style="display:none"></div>
     <input type="text" class="text-input" id="sp-name" placeholder="Your name" maxlength="20" autocomplete="off">
-    <div class="game-settings" id="sp-game-settings">
+    <div class="mode-row" id="sp-mode-row">
+      <button class="mode-btn active" data-mode="math">🧮 Math</button>
+      <button class="mode-btn" data-mode="units">📏 Units</button>
+    </div>
+    <div class="game-settings" id="sp-game-settings" data-mode="math">
       <div class="settings-title" id="sp-settings-title">Game Settings</div>
       <div class="settings-group">
         <div class="settings-label" id="sp-timer-label">Timer</div>
@@ -277,14 +294,27 @@ body.touch .keyboard-hint { display:none; }
           </div>
         </div>
       </div>
-      <div class="settings-group">
+      <div class="settings-group units-only" style="margin-bottom:0">
+        <div class="settings-label" id="sp-units-label">Units to practice</div>
+        <div class="ops-row" id="sp-units-row">
+          <button class="ops-btn active" data-unit="mm">mm</button>
+          <button class="ops-btn active" data-unit="cm">cm</button>
+          <button class="ops-btn active" data-unit="dm">dm</button>
+          <button class="ops-btn active" data-unit="m">m</button>
+          <button class="ops-btn active" data-unit="km">km</button>
+        </div>
+        <div class="units-ref" id="sp-units-ref"></div>
+      </div>
+      <div class="settings-group math-only">
         <div class="settings-label" id="sp-ops-label">Operations</div>
         <div class="ops-row" id="sp-ops-row">
           <button class="ops-btn active" data-op="+">➕ Addition</button>
           <button class="ops-btn active" data-op="−">➖ Subtraction</button>
+          <button class="ops-btn" data-op="×">✖️ Multiplication</button>
+          <button class="ops-btn" data-op="÷">➗ Division</button>
         </div>
       </div>
-      <div class="settings-group">
+      <div class="settings-group math-only">
         <div class="settings-label" id="sp-range-label">Number Range</div>
         <div class="range-row">
           <input type="number" inputmode="numeric" pattern="[0-9]*" class="range-input" id="sp-range-min" value="1" min="1" max="99">
@@ -292,7 +322,7 @@ body.touch .keyboard-hint { display:none; }
           <input type="number" inputmode="numeric" pattern="[0-9]*" class="range-input" id="sp-range-max" value="20" min="2" max="100">
         </div>
       </div>
-      <div class="settings-group" style="margin-bottom:0">
+      <div class="settings-group math-only" style="margin-bottom:0">
         <div class="settings-label" id="sp-presets-label">Presets</div>
         <div class="presets-row" id="sp-presets-row">
           <button class="preset-btn" data-preset="starter">Starter</button>
@@ -410,6 +440,14 @@ const LANG = {
     tipGoThrough10: (a, t, r, answer) => `<strong>Go through 10! 🚀</strong><br>First, get down to 10: ${a} − ${t} = 10<br>You still need to take away ${r} more: 10 − ${r} = <strong>${answer}</strong>`,
     tipFindGap: (b, a, steps, answer) => `<strong>Find the gap! 🔭</strong><br>Count up from ${b} to ${a}: ${steps}<br>That's ${answer} steps, so ${a} − ${b} = <strong>${answer}</strong>`,
     tipCountBack: (a, b, steps, answer) => `<strong>Count backwards! ✋</strong><br>Start at ${a} and count back ${b}: ${steps}<br>You land on <strong>${answer}</strong>!`,
+    tipMul10: (a, b, n, answer) => `<strong>Times 10 trick! 🚀</strong><br>To multiply by 10, just put a 0 at the end!<br>${n} → ${answer}<br>So ${a} × ${b} = <strong>${answer}</strong>`,
+    tipMul2: (a, b, n, answer) => `<strong>Times 2 is a double! 🎯</strong><br>Multiplying by 2 means adding the number to itself.<br>${n} + ${n} = <strong>${answer}</strong>`,
+    tipMul9: (a, b, n, n10, answer) => `<strong>Times 9 trick! 🌟</strong><br>9 is just 1 less than 10.<br>First do ${n} × 10 = ${n10}<br>Then take away one ${n}: ${n10} − ${n} = <strong>${answer}</strong>`,
+    tipSkipCount: (a, b, big, times, steps, answer) => `<strong>Count by ${big}s! 🐸</strong><br>${a} × ${b} means ${times} groups of ${big}.<br>Count by ${big}: ${steps}<br>You land on <strong>${answer}</strong>!`,
+    tipMulSplit: (big, sm, rest, p5, pRest, answer) => `<strong>Break it apart! 🧩</strong><br>Split ${sm} into 5 + ${rest}.<br>${big} × 5 = ${p5}<br>${big} × ${rest} = ${pRest}<br>Put them together: ${p5} + ${pRest} = <strong>${answer}</strong>`,
+    tipDiv10: (a, answer) => `<strong>Divide by 10 trick! 🚀</strong><br>To divide by 10, just take away the 0 at the end!<br>${a} → ${answer}<br>So ${a} ÷ 10 = <strong>${answer}</strong>`,
+    tipDiv2: (a, answer) => `<strong>Divide by 2 means half! 🍕</strong><br>Split ${a} into 2 equal groups.<br>Which number plus itself makes ${a}? ${answer} + ${answer} = ${a}<br>So ${a} ÷ 2 = <strong>${answer}</strong>`,
+    tipDivCount: (a, b, steps, answer) => `<strong>Think multiplication! 🧠</strong><br>${a} ÷ ${b} asks: how many ${b}s make ${a}?<br>Count by ${b} until you reach ${a}: ${steps}<br>That's ${answer} jumps, so ${a} ÷ ${b} = <strong>${answer}</strong>`,
     tipTwoStep: (a, op1, b, mid, op2, c, answer) => `<strong>Two steps! 🧠</strong><br>Do the first part: ${a} ${op1} ${b} = ${mid}<br>Now use that answer: ${mid} ${op2} ${c} = <strong>${answer}</strong>`,
     tipPlaceValueAdd: (a, b, aT, bT, tSum, aO, bO, oSum, answer) => `<strong>Break it apart! 🧩</strong><br>Split each number into tens and ones:<br>${a} = ${aT} + ${aO} and ${b} = ${bT} + ${bO}<br>Add the tens: ${aT} + ${bT} = ${tSum}<br>Add the ones: ${aO} + ${bO} = ${oSum}<br>Put them together: ${tSum} + ${oSum} = <strong>${answer}</strong>`,
     tipPlaceValueSub: (a, b, aT, bT, tDiff, aO, bO, oDiff, answer) => `<strong>Break it apart! 🧩</strong><br>Split each number into tens and ones:<br>${a} = ${aT} + ${aO} and ${b} = ${bT} + ${bO}<br>Subtract the tens: ${aT} − ${bT} = ${tDiff}<br>Subtract the ones: ${aO} − ${bO} = ${oDiff}<br>Put them together: ${tDiff} + ${oDiff} = <strong>${answer}</strong>`,
@@ -436,7 +474,19 @@ const LANG = {
     presetExpert: 'Expert',
     opAddition: '➕ Addition',
     opSubtraction: '➖ Subtraction',
+    opMultiplication: '✖️ Multiplication',
+    opDivision: '➗ Division',
     selectOneOp: 'Select at least one operation!',
+    // unit conversion mode
+    modeMath: '🧮 Math',
+    modeUnits: '📏 Units',
+    settingsUnits: 'Units to practice',
+    units: { mm: 'mm', cm: 'cm', dm: 'dm', m: 'm', km: 'km' },
+    zeros: n => ['', 'one 0', 'two 0s', 'three 0s'][n],
+    tipUnitLadder: (ladder, steps, op) => `🪜 ${ladder} — that's ${steps} steps of ${op} 10<br>`,
+    tipUnitToSmall: (v, from, to, f, ladder, zeros, answer) => `<strong>Big unit → small unit: multiply! 📏</strong><br>1 ${from} = ${f} ${to}<br>${ladder}So ${v} ${from} = ${v} × ${f} = <strong>${answer} ${to}</strong><br>Trick: just put ${zeros} at the end of ${v}!`,
+    tipUnitToBig: (v, from, to, f, ladder, zeros, answer) => `<strong>Small unit → big unit: divide! 📏</strong><br>${f} ${from} = 1 ${to}<br>${ladder}So ${v} ${from} = ${v} ÷ ${f} = <strong>${answer} ${to}</strong><br>Trick: just take ${zeros} off the end of ${v}!`,
+    tipUnitMixed: (a, big, b, small, f, aConv, answer) => `<strong>Two parts! 🧩</strong><br>1 ${big} = ${f} ${small}<br>First change ${a} ${big} into ${small}: ${a} × ${f} = ${aConv} ${small}<br>Then add the ${b} ${small}: ${aConv} + ${b} = <strong>${answer} ${small}</strong>`,
   },
   sr: {
     pageTitle: 'Свемирска Математика',
@@ -474,6 +524,14 @@ const LANG = {
     tipGoThrough10: (a, t, r, answer) => `<strong>Прођи кроз 10! 🚀</strong><br>Прво сиђи до 10: ${a} − ${t} = 10<br>Треба да одузмеш још ${r}: 10 − ${r} = <strong>${answer}</strong>`,
     tipFindGap: (b, a, steps, answer) => `<strong>Нађи разлику! 🔭</strong><br>Бројиш од ${b} до ${a}: ${steps}<br>То је ${answer} корака, значи ${a} − ${b} = <strong>${answer}</strong>`,
     tipCountBack: (a, b, steps, answer) => `<strong>Бројиш уназад! ✋</strong><br>Крени од ${a} и бројиш уназад ${b}: ${steps}<br>Стижеш на <strong>${answer}</strong>!`,
+    tipMul10: (a, b, n, answer) => `<strong>Трик за пута 10! 🚀</strong><br>Кад множиш са 10, само допиши 0 на крај!<br>${n} → ${answer}<br>Зато ${a} × ${b} = <strong>${answer}</strong>`,
+    tipMul2: (a, b, n, answer) => `<strong>Пута 2 је дупло! 🎯</strong><br>Множење са 2 значи да сабереш број са самим собом.<br>${n} + ${n} = <strong>${answer}</strong>`,
+    tipMul9: (a, b, n, n10, answer) => `<strong>Трик за пута 9! 🌟</strong><br>9 је само 1 мање од 10.<br>Прво израчунај ${n} × 10 = ${n10}<br>Па одузми једно ${n}: ${n10} − ${n} = <strong>${answer}</strong>`,
+    tipSkipCount: (a, b, big, times, steps, answer) => `<strong>Бројиш по ${big}! 🐸</strong><br>${a} × ${b} значи да ${big} узмеш ${times} пута.<br>Броји по ${big}: ${steps}<br>Стижеш на <strong>${answer}</strong>!`,
+    tipMulSplit: (big, sm, rest, p5, pRest, answer) => `<strong>Растави па помножи! 🧩</strong><br>Растави ${sm} на 5 + ${rest}.<br>${big} × 5 = ${p5}<br>${big} × ${rest} = ${pRest}<br>Састави: ${p5} + ${pRest} = <strong>${answer}</strong>`,
+    tipDiv10: (a, answer) => `<strong>Трик за дељење са 10! 🚀</strong><br>Кад делиш са 10, само обриши 0 са краја!<br>${a} → ${answer}<br>Зато ${a} ÷ 10 = <strong>${answer}</strong>`,
+    tipDiv2: (a, answer) => `<strong>Подели на пола! 🍕</strong><br>Подели ${a} на 2 једнаке групе.<br>Који број сабран са самим собом даје ${a}? ${answer} + ${answer} = ${a}<br>Зато ${a} ÷ 2 = <strong>${answer}</strong>`,
+    tipDivCount: (a, b, steps, answer) => `<strong>Мисли на множење! 🧠</strong><br>${a} ÷ ${b} пита: колико пута ${b} стаје у ${a}?<br>Броји по ${b} док не стигнеш до ${a}: ${steps}<br>Бројао си ${answer} пута, зато ${a} ÷ ${b} = <strong>${answer}</strong>`,
     tipTwoStep: (a, op1, b, mid, op2, c, answer) => `<strong>У два корака! 🧠</strong><br>Реши прво ово: ${a} ${op1} ${b} = ${mid}<br>Сад користи тај одговор: ${mid} ${op2} ${c} = <strong>${answer}</strong>`,
     tipPlaceValueAdd: (a, b, aT, bT, tSum, aO, bO, oSum, answer) => `<strong>Растави па сабери! 🧩</strong><br>Растави сваки број на десетице и јединице:<br>${a} = ${aT} + ${aO} и ${b} = ${bT} + ${bO}<br>Сабери десетице: ${aT} + ${bT} = ${tSum}<br>Сабери јединице: ${aO} + ${bO} = ${oSum}<br>Састави: ${tSum} + ${oSum} = <strong>${answer}</strong>`,
     tipPlaceValueSub: (a, b, aT, bT, tDiff, aO, bO, oDiff, answer) => `<strong>Растави па одузми! 🧩</strong><br>Растави сваки број на десетице и јединице:<br>${a} = ${aT} + ${aO} и ${b} = ${bT} + ${bO}<br>Одузми десетице: ${aT} − ${bT} = ${tDiff}<br>Одузми јединице: ${aO} − ${bO} = ${oDiff}<br>Састави: ${tDiff} + ${oDiff} = <strong>${answer}</strong>`,
@@ -500,7 +558,19 @@ const LANG = {
     presetExpert: 'Експерт',
     opAddition: '➕ Сабирање',
     opSubtraction: '➖ Одузимање',
+    opMultiplication: '✖️ Множење',
+    opDivision: '➗ Дељење',
     selectOneOp: 'Изабери бар једну операцију!',
+    // unit conversion mode
+    modeMath: '🧮 Рачунање',
+    modeUnits: '📏 Мерење',
+    settingsUnits: 'Мерне јединице',
+    units: { mm: 'мм', cm: 'цм', dm: 'дм', m: 'м', km: 'км' },
+    zeros: n => ['', 'једну нулу', 'две нуле', 'три нуле'][n],
+    tipUnitLadder: (ladder, steps, op) => `🪜 ${ladder} — то су ${steps} корака по ${op} 10<br>`,
+    tipUnitToSmall: (v, from, to, f, ladder, zeros, answer) => `<strong>Из веће у мању јединицу: множиш! 📏</strong><br>1 ${from} = ${f} ${to}<br>${ladder}Значи ${v} ${from} = ${v} × ${f} = <strong>${answer} ${to}</strong><br>Трик: само допиши ${zeros} на крај броја ${v}!`,
+    tipUnitToBig: (v, from, to, f, ladder, zeros, answer) => `<strong>Из мање у већу јединицу: делиш! 📏</strong><br>${f} ${from} = 1 ${to}<br>${ladder}Значи ${v} ${from} = ${v} ÷ ${f} = <strong>${answer} ${to}</strong><br>Трик: само обриши ${zeros} са краја броја ${v}!`,
+    tipUnitMixed: (a, big, b, small, f, aConv, answer) => `<strong>Два дела! 🧩</strong><br>1 ${big} = ${f} ${small}<br>Прво претвори ${a} ${big} у ${small}: ${a} × ${f} = ${aConv} ${small}<br>Па додај ${b} ${small}: ${aConv} + ${b} = <strong>${answer} ${small}</strong>`,
   }
 };
 
@@ -523,11 +593,20 @@ function applyLanguage() {
   // SP game settings
   $('sp-settings-title').textContent = t('gameSettings');
   $('sp-ops-label').textContent = t('settingsOps');
+  const OP_LABELS = { '+': 'opAddition', '−': 'opSubtraction', '×': 'opMultiplication', '÷': 'opDivision' };
   $('sp-range-label').textContent = t('settingsRange');
   $('sp-range-dash').textContent = t('settingsRangeTo');
   $('sp-presets-label').textContent = t('settingsPresets');
-  $('sp-ops-row').querySelectorAll('.ops-btn').forEach(b => b.textContent = b.dataset.op === '+' ? t('opAddition') : t('opSubtraction'));
+  $('sp-ops-row').querySelectorAll('.ops-btn').forEach(b => b.textContent = t(OP_LABELS[b.dataset.op]));
   $('sp-presets-row').querySelectorAll('.preset-btn').forEach(b => b.textContent = t('preset' + b.dataset.preset.charAt(0).toUpperCase() + b.dataset.preset.slice(1)));
+  // mode switch + unit settings
+  $('sp-mode-row').querySelectorAll('.mode-btn').forEach(b => b.textContent = t(b.dataset.mode === 'units' ? 'modeUnits' : 'modeMath'));
+  $('sp-units-label').textContent = t('settingsUnits');
+  $('sp-units-row').querySelectorAll('.ops-btn').forEach(b => b.textContent = U(b.dataset.unit));
+  $('sp-units-ref').innerHTML = [['km', 1000, 'm'], ['m', 10, 'dm'], ['dm', 10, 'cm'], ['cm', 10, 'mm']]
+    .map(([b, n, s]) => `<span style="white-space:nowrap">1 ${U(b)} = ${n} ${U(s)}</span>`).join(' · ');
+  // unit symbols are language-specific, so redraw an open problem
+  if (sp.currentProblem && $('screen-sp-game').classList.contains('active') && !sp.answered) { spRenderProblem(); spUpdateAnswer(); }
   // SP game
   $('sp-keyboard-hint').textContent = t('typeAnswer');
   document.querySelector('#sp-briefing .briefing-header').textContent = t('missionBriefing');
@@ -614,8 +693,22 @@ function launchRocket(){const r=document.createElement('div');r.className='rocke
 
 // teaching tip
 function generateTip(p){
+  if(p.kind==='unit')return generateUnitTip(p);
   if(p.twoStep){const L=LANG[currentLang];return L.tipTwoStep(p.a,p.op1,p.b,p.mid,p.op2,p.c,p.answer);}
   const{a,b,isAdd,answer}=p;const L=LANG[currentLang];
+  if(p.op==='×'){
+    const big=Math.max(a,b),sm=Math.min(a,b);
+    if(big===10){const n=a===10?b:a;return L.tipMul10(a,b,n,answer);}
+    if(sm===2)return L.tipMul2(a,b,big,answer);
+    if(big===9)return L.tipMul9(a,b,sm,sm*10,answer);
+    if(sm<=5){const st=[];for(let i=1;i<=sm;i++)st.push(big*i);return L.tipSkipCount(a,b,big,sm,st.join(', '),answer);}
+    {const rest=sm-5;return L.tipMulSplit(big,sm,rest,big*5,big*rest,answer);}
+  }
+  if(p.op==='÷'){
+    if(b===10)return L.tipDiv10(a,answer);
+    if(b===2)return L.tipDiv2(a,answer);
+    {const st=[];for(let i=1;i<=answer;i++)st.push(b*i);return L.tipDivCount(a,b,st.join(', '),answer);}
+  }
   if(isAdd){
     // Large numbers: use place value (tens + ones)
     if(a>20||b>20){
@@ -689,6 +782,68 @@ function getDiffClass(diff) {
 }
 
 // ════════════════════════════════════════════
+//  UNIT CONVERSION MODE (length: mm, cm, dm, m, km)
+// ════════════════════════════════════════════
+const UNIT_POW = { mm: 0, cm: 1, dm: 2, m: 3, km: 6 }; // size as a power of 10, in mm
+const UNIT_LADDER = ['m', 'dm', 'cm', 'mm'];           // each step down is ×10 (km sits apart: 1 km = 1000 m)
+const ALL_UNITS = Object.keys(UNIT_POW);
+function U(u) { return LANG[currentLang].units[u]; }
+
+// [big, small] pairs worth practicing: at most ×1000 apart, so km only pairs with m
+function unitPairs(units) {
+  const out = [];
+  for (const b of units) for (const s of units) {
+    const d = UNIT_POW[b] - UNIT_POW[s];
+    if (d > 0 && d <= 3) out.push([b, s]);
+  }
+  return out;
+}
+// how hard a pair is: ladder steps apart (km → m is a single fact kids learn directly)
+function unitSteps(b, s) { return b === 'km' ? 1 : UNIT_POW[b] - UNIT_POW[s]; }
+
+// easy:   neighbours, big → small        (4 dm = ? cm)
+// medium: up to 2 steps, both directions (300 cm = ? m)
+// hard:   any pair, two-digit numbers     (45 dm = ? mm)
+// expert: mostly mixed units              (3 m 25 cm = ? cm)
+function generateUnitProblem(diff) {
+  const rand = (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo;
+  const all = unitPairs(gameSettings.units);
+  const maxSteps = diff === 'easy' ? 1 : diff === 'medium' ? 2 : 3;
+  let pool = all.filter(([b, s]) => unitSteps(b, s) <= maxSteps);
+  if (!pool.length) pool = all;
+  const [big, small] = pick(pool);
+  const f = 10 ** (UNIT_POW[big] - UNIT_POW[small]);
+
+  if (diff === 'expert' && Math.random() < 0.6) {
+    const a = rand(1, 9), b = rand(1, f - 1);
+    return { kind: 'unit', mixed: true, a, b, from: big, to: small, f, answer: a * f + b };
+  }
+  // keep every number on screen ≤ 9999
+  const kMax = (diff === 'hard' || diff === 'expert') && f < 1000 ? 99 : 9;
+  const k = rand(1, kMax);
+  const toSmall = diff === 'easy' || Math.random() < 0.5;
+  return toSmall
+    ? { kind: 'unit', value: k, from: big, to: small, f, toSmall: true, answer: k * f }
+    : { kind: 'unit', value: k * f, from: small, to: big, f, toSmall: false, answer: k };
+}
+
+function generateUnitTip(p) {
+  const L = LANG[currentLang];
+  if (p.mixed) return L.tipUnitMixed(p.a, U(p.from), p.b, U(p.to), p.f, p.a * p.f, p.answer);
+  const big = p.toSmall ? p.from : p.to, small = p.toSmall ? p.to : p.from;
+  // for 2+ ladder steps, show the ladder so ×100 / ×1000 isn't magic
+  let ladder = '';
+  const i = UNIT_LADDER.indexOf(big), j = UNIT_LADDER.indexOf(small);
+  if (i >= 0 && j - i >= 2) {
+    const rungs = UNIT_LADDER.slice(i, j + 1);
+    if (!p.toSmall) rungs.reverse();
+    ladder = L.tipUnitLadder(rungs.map(U).join(' → '), j - i, p.toSmall ? '×' : '÷');
+  }
+  const zeros = L.zeros(Math.round(Math.log10(p.f)));
+  return (p.toSmall ? L.tipUnitToSmall : L.tipUnitToBig)(p.value, U(p.from), U(p.to), p.f, ladder, zeros, p.answer);
+}
+
+// ════════════════════════════════════════════
 //  GAME SETTINGS
 // ════════════════════════════════════════════
 const PRESETS = {
@@ -697,16 +852,23 @@ const PRESETS = {
   challenge: { ops: ['+', '−'], minNum: 1, maxNum: 50 },
   expert:    { ops: ['+', '−'], minNum: 1, maxNum: 100 },
 };
-let gameSettings = { ops: ['+', '−'], minNum: 1, maxNum: 20, preset: 'classic' };
+let gameSettings = { ops: ['+', '−'], minNum: 1, maxNum: 20, preset: 'classic', mode: 'math', units: [...ALL_UNITS] };
 
 function loadGameSettings() {
   try { const s = JSON.parse(localStorage.getItem('spaceMathSettings')); if (s) Object.assign(gameSettings, s); } catch {}
+  if (gameSettings.mode !== 'units') gameSettings.mode = 'math';
+  const units = Array.isArray(gameSettings.units) ? gameSettings.units.filter(u => u in UNIT_POW) : [];
+  gameSettings.units = unitPairs(units).length ? units : [...ALL_UNITS];
 }
 function saveGameSettings() {
   localStorage.setItem('spaceMathSettings', JSON.stringify(gameSettings));
 }
 
 function applySettingsToUI(prefix) {
+  // mode switch + unit buttons
+  $(prefix + '-mode-row').querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === gameSettings.mode));
+  $(prefix + '-game-settings').dataset.mode = gameSettings.mode;
+  $(prefix + '-units-row').querySelectorAll('.ops-btn').forEach(b => b.classList.toggle('active', gameSettings.units.includes(b.dataset.unit)));
   // ops buttons
   $(prefix + '-ops-row').querySelectorAll('.ops-btn').forEach(b => {
     b.classList.toggle('active', gameSettings.ops.includes(b.dataset.op));
@@ -731,6 +893,27 @@ function matchPreset() {
 }
 
 function setupSettingsHandlers(prefix) {
+  // math / units mode
+  $(prefix + '-mode-row').addEventListener('click', e => {
+    const btn = e.target.closest('.mode-btn');
+    if (!btn) return;
+    SFX.tap();
+    gameSettings.mode = btn.dataset.mode;
+    applySettingsToUI(prefix);
+    saveGameSettings();
+  });
+  // unit toggles: refuse a change that leaves nothing to convert (e.g. only mm + km)
+  $(prefix + '-units-row').addEventListener('click', e => {
+    const btn = e.target.closest('.ops-btn');
+    if (!btn) return;
+    SFX.tap();
+    const u = btn.dataset.unit;
+    const next = gameSettings.units.includes(u) ? gameSettings.units.filter(x => x !== u) : [...gameSettings.units, u];
+    if (!unitPairs(next).length) return;
+    gameSettings.units = next;
+    applySettingsToUI(prefix);
+    saveGameSettings();
+  });
   // operation toggles
   $(prefix + '-ops-row').addEventListener('click', e => {
     const btn = e.target.closest('.ops-btn');
@@ -801,11 +984,27 @@ function generateProblemByDifficulty(diff, settings) {
   resMax = Math.min(resMax, maxNum);
   const rand = (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo;
 
+  // Multiplication/division stay within the times table: factors up to 10
+  const fHi = Math.min(maxNum, 10);
+  const fLo = Math.min(Math.max(minNum, 2), fHi);
+  const fMax = diff === 'easy' ? Math.min(fHi, Math.max(fLo, 5))
+             : diff === 'medium' ? Math.min(fHi, Math.max(fLo, 7))
+             : fHi;
+  const addSubOps = ops.filter(o => o === '+' || o === '−');
+
   for (let tries = 0; tries < 200; tries++) {
-    // Expert two-step if range is big enough
+    const op = ops[Math.floor(Math.random() * ops.length)];
+
+    if (op === '×' || op === '÷') {
+      const x = rand(fLo, fMax), y = rand(fLo, fMax);
+      if (op === '×') return { a: x, b: y, op: '×', answer: x * y };
+      return { a: x * y, b: y, op: '÷', answer: x };
+    }
+
+    // Expert two-step if range is big enough (only + and −, so order of operations never matters)
     if (diff === 'expert' && span >= 10) {
-      const op1 = ops[Math.floor(Math.random() * ops.length)];
-      const op2 = ops[Math.floor(Math.random() * ops.length)];
+      const op1 = addSubOps[Math.floor(Math.random() * addSubOps.length)];
+      const op2 = addSubOps[Math.floor(Math.random() * addSubOps.length)];
       const a = rand(minNum, opMax);
       const bMax = Math.max(minNum, minNum + Math.floor((opMax - minNum) * 0.7));
       const b = rand(minNum, bMax);
@@ -818,7 +1017,6 @@ function generateProblemByDifficulty(diff, settings) {
       return { a, b, c, op1, op2, twoStep: true, mid, answer, isAdd: op1 === '+' };
     }
 
-    const op = ops[Math.floor(Math.random() * ops.length)];
     const isAdd = op === '+';
     let a = rand(minNum, opMax);
     let b = rand(minNum, opMax);
@@ -844,6 +1042,18 @@ function generateProblemByDifficulty(diff, settings) {
 function problemDisplayText(p) {
   if (p.twoStep) return `${p.a} ${p.op1} ${p.b} ${p.op2} ${p.c} = `;
   return `${p.a} ${p.op} ${p.b} = `;
+}
+// question as shown in the game ("4 dm = ? cm" / "3 + 4 = ?")
+function problemPromptText(p) {
+  if (p.kind === 'unit') {
+    const lhs = p.mixed ? `${p.a} ${U(p.from)} ${p.b} ${U(p.to)}` : `${p.value} ${U(p.from)}`;
+    return `${lhs} = ? ${U(p.to)}`;
+  }
+  return problemDisplayText(p) + '?';
+}
+// same, with the answer filled in (mission briefing)
+function problemSolvedText(p) {
+  return problemPromptText(p).replace('?', p.answer);
 }
 
 function flashDiffChange(oldDiff, newDiff) {
@@ -924,10 +1134,10 @@ function spLoadProblem(){
   const diff=getDifficulty(sp.combo);
   flashDiffChange(sp.prevDiff,diff);
   sp.prevDiff=diff;
-  const p=generateProblemByDifficulty(diff);
+  const p=gameSettings.mode==='units'?generateUnitProblem(diff):generateProblemByDifficulty(diff);
   sp.currentProblem=p;
   sp.answered=false;sp.input='';
-  $('sp-problem-text').textContent=problemDisplayText(p)+'?';
+  spRenderProblem();
   spUpdateAnswer();
   $('sp-feedback').innerHTML='&nbsp;';$('sp-feedback').className='feedback';
   $('sp-keyboard-hint').style.display='';
@@ -951,9 +1161,16 @@ function spLoadProblem(){
   }else{$('sp-timer-bar').style.display='none';stopTimerAnim();}
 }
 
+function spRenderProblem(){
+  const p=sp.currentProblem,txt=problemPromptText(p),el=$('sp-problem-text');
+  el.textContent=txt;
+  el.classList.toggle('long',p.kind==='unit'&&txt.length>12);
+}
+
 function spUpdateAnswer(){
-  const el=$('sp-answer-display');
-  el.innerHTML=sp.input===''?'<span class="cursor"></span>':escapeHTML(sp.input);
+  const el=$('sp-answer-display'),p=sp.currentProblem;
+  const unit=p&&p.kind==='unit'?`<span class="answer-unit">${escapeHTML(U(p.to))}</span>`:'';
+  el.innerHTML=(sp.input===''?'<span class="cursor"></span>':escapeHTML(sp.input))+unit;
 }
 
 function spSubmit(){
@@ -980,7 +1197,7 @@ function spSubmit(){
 
 function spShowBriefing(p){
   const tip=generateTip(p);
-  $('sp-briefing-answer').textContent=problemDisplayText(p)+p.answer;
+  $('sp-briefing-answer').textContent=problemSolvedText(p);
   $('sp-briefing-tip').innerHTML=`<div style="margin-bottom:8px;color:rgba(255,255,255,0.7)">${LANG[currentLang].briefingIntro()}</div>${tip}`;
   $('sp-briefing').classList.add('visible');
   $('sp-problem-box').style.display='none';$('sp-feedback').style.display='none';$('sp-keyboard-hint').style.display='none';$('sp-keypad').style.display='none';
@@ -1015,12 +1232,15 @@ setupSettingsHandlers('sp');
 // ════════════════════════════════════════════
 //  INPUT ROUTING (physical keyboard + on-screen keypad)
 // ════════════════════════════════════════════
+// products can go past the number range (e.g. 7 × 8 with range 1–20)
+// unit answers go up to 9999 (e.g. 9 km 999 m = 9999 m)
+function maxAnswer(){if(gameSettings.mode==='units')return 9999;return gameSettings.ops.some(o=>o==='×'||o==='÷')?Math.max(gameSettings.maxNum,100):gameSettings.maxNum;}
 function handleSpKey(key){
   if($('sp-briefing').classList.contains('visible')){
     if(key==='Enter'){SFX.tap();spHideBriefing();sp.current++;spLoadProblem();}
     return;
   }
-  if(key>='0'&&key<='9'){SFX.tap();if(sp.answered)return;const p=sp.input+key,n=parseInt(p,10);if(n>gameSettings.maxNum||p.length>3)return;sp.input=String(n);spUpdateAnswer();}
+  if(key>='0'&&key<='9'){SFX.tap();if(sp.answered)return;const p=sp.input+key,n=parseInt(p,10);if(n>maxAnswer()||p.length>4)return;sp.input=String(n);spUpdateAnswer();}
   else if(key==='Backspace'){SFX.clear();if(sp.answered)return;sp.input='';spUpdateAnswer();}
   else if(key==='Enter')spSubmit();
 }

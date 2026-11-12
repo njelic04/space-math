@@ -1,6 +1,6 @@
 # Space Math
 
-A space-themed math game for kids. Practice addition and subtraction right in your browser — no installation, no server, no account.
+A space-themed math game for kids. Practice addition, subtraction, multiplication and division right in your browser — no installation, no server, no account.
 
 **[Прочитај на српском (README_SR.md)](README_SR.md)**
 
@@ -37,11 +37,23 @@ The game opens right in your browser. That's it!
 ## How to Play
 
 - Type your name and press **Enter**
-- Choose your operations (addition, subtraction, or both)
+- Choose your operations (addition, subtraction, multiplication, division — any mix)
 - Pick a number range (1-10 for beginners, up to 1-100 for a challenge)
 - Use the quick presets: **Starter**, **Classic**, **Challenge**, or **Expert**
 - Optionally turn on a timer for extra challenge
 - Type your answer with the keyboard and press **Enter**
+
+### 📏 Units Mode
+
+Switch from **🧮 Math** to **📏 Units** to practice converting lengths: **mm, cm, dm, m and km**.
+
+- Pick which units to practice (for example, just cm, dm and m)
+- Questions get harder as you keep answering correctly:
+  - **Easy:** `4 dm = ? cm`
+  - **Medium:** `300 cm = ? m`
+  - **Hard:** `45 dm = ? mm`
+  - **Expert:** `3 m 25 cm = ? cm`
+- Get one wrong and the Mission Briefing shows you how to solve it, including the "unit ladder" (each step is × 10)
 
 Your scores are saved in the browser, so you can come back and beat your high score anytime.
 
